@@ -105,5 +105,12 @@ Worked example: `examples/duffing_311.py` in the library reproduces thesis Fig. 
 
 ## Not covered yet
 
-2D field plots (heatmaps), corner plots, and one-call recipes for whole figure types. Ask
-before inventing a style for these.
+Todo, in this order:
+
+1. Gradient draws: `paths` lines whose colour or saturation changes with distance from the
+   median, so the teal draws fade or shift as they move away from the centre instead of
+   sharing one flat colour.
+2. 2D plots: heatmaps and other field plots, using the colormaps in `lf.RAMPS`.
+
+Also missing: corner plots and one-call recipes for whole figure types. Ask before inventing
+a style for any of these.
