@@ -29,7 +29,7 @@ import labfigs as lf
 lf.use()                                  # style; LaTeX text when latex is installed
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = panel height / width
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
-lf.paths(ax, x, samples, label="Posterior predictive")  # one faint line per draw, thinned to 100
+lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 shown) over a grey 95% band
 ax.plot(x, y, color=lf.TRUE, label="True")
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
 lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per method
@@ -45,7 +45,7 @@ lf.save(fig, "out/name")                  # trims spines, writes name.pdf and na
 `intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position;
 `intervals(connect=True)` joins the dots.
 
-Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100)`,
+Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=0.95)`,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
 spines (heatmaps, log axes), `use(tex=False)` for fast drafts.
 
@@ -72,6 +72,9 @@ a report. Do not pick colours by hand.
   grid, a column title names the case (`ax.set(title="76 Torr")` on the top row only).
 - `band` (crimson, α 0.5) is for one posterior; `ribbon` is for several methods overlaid.
 - Draw order: band, sample paths, truth.
+- `paths` puts a neutral grey credible band under the draws by default, computed from all
+  draws. Pass `level=None` when the panel already has a band (another method's `ribbon`, a
+  `band` of the same posterior).
 - Sample paths need the draws: every sampling script saves its draws (`.npz`), not only
   summaries, so `lf.paths` can show them later without re-running the sampler.
 

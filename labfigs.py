@@ -81,8 +81,11 @@ def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
     return ax.errorbar(np.asarray(x) + shift, mid, [mid - lo, hi - mid], fmt=fmt, ms=3, **kw)
 
 
-def paths(ax, x, samples, color=PREDICTIVE, alpha=0.1, draws=100, **kw):
+def paths(ax, x, samples, color=PREDICTIVE, alpha=0.1, draws=100, level=0.95, **kw):
     samples = np.asarray(samples)
+    if level:
+        percent = r"\%" if plt.rcParams["text.usetex"] else "%"
+        band(ax, x, samples, level, color=REFERENCE, alpha=0.3, lw=0, label=f"{100 * level:g}{percent} interval")
     keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
     return ax.plot(x, samples[keep].T, color=color, alpha=alpha, **kw)
 
