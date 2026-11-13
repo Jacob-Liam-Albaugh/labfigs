@@ -4,6 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
@@ -12,16 +13,21 @@ PREDICTIVE = "lightseagreen"
 REFERENCE = "0.55"
 TRUE = "black"
 SERIES = [POSTERIOR, PREDICTIVE, "tab:blue", "tab:orange", "tab:green", "tab:purple", "tab:brown", "tab:olive"]
+MUTED = ["#BC5A55", "#66909F", "#DBA3AD", "#BF6468", "#6B7883", "#9A7078", "#8795A2"]
+HEAT = LinearSegmentedColormap.from_list(
+    "heat", ["#8E063B", "#B9534C", "#DA8459", "#EEAB65", "#F6C971", "#F1DE81", "#E2E6BD"])
+# stops each ramp before the end that is too pale to read as a line on white
+RAMPS = {"heat": (HEAT, 0.0, 0.6), "blues": (plt.get_cmap("Blues_r"), 0.0, 0.65), "viridis": (plt.get_cmap("viridis"), 0.0, 0.95)}
 TEXT_WIDTH = 6.5
 
 
-def use(tex=None, font_size=10):
+def use(tex=None, font_size=10, series=SERIES):
     if tex is None:
         tex = shutil.which("latex") is not None
     sns.set_style("ticks")
     plt.rcParams.update({
         "text.usetex": tex,
-        "axes.prop_cycle": plt.cycler(color=SERIES),
+        "axes.prop_cycle": plt.cycler(color=series),
         "font.family": "serif",
         "font.serif": ["CMU Serif", "Latin Modern Roman", "DejaVu Serif"],
         "mathtext.fontset": "cm",
@@ -46,6 +52,11 @@ def use(tex=None, font_size=10):
 def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, **kw):
     height = nrows * (width / ncols) * aspect
     return plt.subplots(nrows, ncols, figsize=(width, height), **kw)
+
+
+def ramp(n, name="heat"):
+    cmap, dark, light = RAMPS[name]
+    return cmap(np.linspace(dark, light, n))
 
 
 def quantiles(samples, level=0.95):

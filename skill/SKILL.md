@@ -38,6 +38,8 @@ lf.trace(ax, x, y, label="76 Torr")       # dots joined by a line (convergence, 
 lf.intervals(ax, x, lo, mid, hi, shift=dx)  # dot with a vertical 95% bar per x
 lf.legend_above(axes[0])                  # one-row legend above the top panel
 lf.legend_above(fig)                      # same, for a grid: labels deduplicated over all panels
+for y, c in zip(curves, lf.ramp(len(curves), "heat")):  # ordered sweep, dark to light
+    ax.plot(x, y, color=c)
 lf.save(fig, "out/name")                  # trims spines, writes name.pdf and name.png
 ```
 
@@ -63,6 +65,16 @@ Several series (methods, a sweep over a parameter): use the default colour cycle
 first two series always match Fig. 3.11. Give one method the same `"Cn"` in every figure of
 a report. Do not pick colours by hand.
 
+An ordered sweep (pressure, noise level, step count) is not a set of methods: colour it with
+`lf.ramp(n, name)`, which returns `n` colours from dark to light. Ramps: `"heat"` (maroon to
+sand, the default), `"blues"` (ColorBrewer), `"viridis"`. Each stops before its pale end so
+thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`.
+
+`lf.MUTED` is a softer seven-colour set (brick red, steel teal, dusty pink, rose, slate,
+mauve, blue-grey). Its neighbours are close in hue, so use it for light/dark pairs of one
+method or a quiet figure, via `lf.use(series=lf.MUTED)`; keep the default cycle for telling
+methods apart.
+
 ## Conventions
 
 - Axis labels are LaTeX math, normalised quantities written as `$x_1/\bar{x}_1$`.
@@ -75,6 +87,8 @@ a report. Do not pick colours by hand.
 - `paths` puts a neutral grey credible band under the draws by default, computed from all
   draws. Pass `level=None` when the panel already has a band (another method's `ribbon`, a
   `band` of the same posterior).
+- At most one series per panel is shown as draws; every other method in that panel is a
+  `ribbon`. Two sets of draws on top of each other hide both.
 - Sample paths need the draws: every sampling script saves its draws (`.npz`), not only
   summaries, so `lf.paths` can show them later without re-running the sampler.
 
