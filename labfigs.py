@@ -11,6 +11,7 @@ POSTERIOR = "crimson"
 PREDICTIVE = "lightseagreen"
 REFERENCE = "0.55"
 TRUE = "black"
+SERIES = [POSTERIOR, PREDICTIVE, "tab:blue", "tab:orange", "tab:green", "tab:purple", "tab:brown", "tab:olive"]
 TEXT_WIDTH = 6.5
 
 
@@ -20,6 +21,7 @@ def use(tex=None, font_size=10):
     sns.set_style("ticks")
     plt.rcParams.update({
         "text.usetex": tex,
+        "axes.prop_cycle": plt.cycler(color=SERIES),
         "font.family": "serif",
         "font.serif": ["CMU Serif", "Latin Modern Roman", "DejaVu Serif"],
         "mathtext.fontset": "cm",
@@ -79,8 +81,10 @@ def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
     return ax.errorbar(np.asarray(x) + shift, mid, [mid - lo, hi - mid], fmt=fmt, ms=3, **kw)
 
 
-def paths(ax, x, samples, color=PREDICTIVE, alpha=0.1, **kw):
-    return ax.plot(x, np.asarray(samples).T, color=color, alpha=alpha, **kw)
+def paths(ax, x, samples, color=PREDICTIVE, alpha=0.1, draws=100, **kw):
+    samples = np.asarray(samples)
+    keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
+    return ax.plot(x, samples[keep].T, color=color, alpha=alpha, **kw)
 
 
 def split(ax, x, overshoot=0.12):
