@@ -32,9 +32,18 @@ lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws,
 lf.paths(ax, x, samples, label="Posterior predictive")  # one faint line per draw
 ax.plot(x, y, color=lf.TRUE, label="True")
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
+lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per method
+lf.data(ax, x, y, label="Sensors")        # black measurement dots
+lf.trace(ax, x, y, label="76 Torr")       # dots joined by a line (convergence, sweeps)
+lf.intervals(ax, x, lo, mid, hi, shift=dx)  # dot with a vertical 95% bar per x
 lf.legend_above(axes[0])                  # one-row legend above the top panel
+lf.legend_above(fig)                      # same, for a grid: labels deduplicated over all panels
 lf.save(fig, "out/name")                  # trims spines, writes name.pdf and name.png
 ```
+
+`lf.quantiles(samples)` returns `(lo, median, hi)`, ready to unpack into `ribbon` or
+`intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position;
+`intervals(connect=True)` joins the dots.
 
 Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=)`,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
@@ -57,7 +66,9 @@ cycle, which is matplotlib's `tab10`. Do not pick colours by hand.
 - Axis labels are LaTeX math, normalised quantities written as `$x_1/\bar{x}_1$`.
 - Set ticks explicitly on axes with a natural range (`yticks=[-1, 0, 1]`); the spines are
   trimmed to the outermost ticks, so ticks define the frame.
-- One legend per figure, above the top panel. No titles; the caption carries the title.
+- One legend per figure, above the top panel. No figure title; the caption carries it. In a
+  grid, a column title names the case (`ax.set(title="76 Torr")` on the top row only).
+- `band` (crimson, α 0.5) is for one posterior; `ribbon` is for several methods overlaid.
 - Draw order: band, sample paths, truth.
 
 ## Running

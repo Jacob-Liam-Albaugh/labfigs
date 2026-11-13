@@ -4,6 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 
 POSTERIOR = "crimson"
@@ -24,6 +25,7 @@ def use(tex=None, font_size=10):
         "mathtext.fontset": "cm",
         "font.size": font_size,
         "axes.labelsize": font_size,
+        "axes.titlesize": font_size,
         "xtick.labelsize": font_size,
         "ytick.labelsize": font_size,
         "legend.fontsize": font_size,
@@ -44,10 +46,37 @@ def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, **kw):
     return plt.subplots(nrows, ncols, figsize=(width, height), **kw)
 
 
-def band(ax, x, samples, level=0.95, color=POSTERIOR, alpha=0.5, **kw):
+def quantiles(samples, level=0.95):
     tail = (1 - level) / 2
-    lo, hi = np.quantile(samples, [tail, 1 - tail], axis=0)
+    return np.nanquantile(samples, [tail, 0.5, 1 - tail], axis=0)
+
+
+def band(ax, x, samples, level=0.95, color=POSTERIOR, alpha=0.5, **kw):
+    lo, _, hi = quantiles(samples, level)
     return ax.fill_between(x, lo, hi, color=color, alpha=alpha, **kw)
+
+
+def ribbon(ax, x, lo, mid, hi, color=None, alpha=0.25, **kw):
+    line, = ax.plot(x, mid, color=color, **kw)
+    ax.fill_between(x, lo, hi, color=line.get_color(), alpha=alpha, lw=0)
+    return line
+
+
+def data(ax, x, y, **kw):
+    return ax.plot(x, y, "o", color=TRUE, ms=2.5, zorder=3, **kw)
+
+
+def trace(ax, x, y, **kw):
+    return ax.plot(x, y, "o-", ms=3, **kw)[0]
+
+
+def dodge(n, width=0.17):
+    return (np.arange(n) - (n - 1) / 2) * width
+
+
+def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
+    fmt = "o-" if connect else "o"
+    return ax.errorbar(np.asarray(x) + shift, mid, [mid - lo, hi - mid], fmt=fmt, ms=3, **kw)
 
 
 def paths(ax, x, samples, color=PREDICTIVE, alpha=0.1, **kw):
@@ -58,13 +87,17 @@ def split(ax, x, overshoot=0.12):
     return ax.axvline(x, -overshoot, 1 + overshoot, color=TRUE, ls="--", lw=0.8, clip_on=False)
 
 
-def legend_above(ax, gap=0.18, **kw):
-    unique = dict(zip(*reversed(ax.get_legend_handles_labels())))
+def legend_above(target, gap=0.18, **kw):
+    axes = target.axes if isinstance(target, Figure) else [target]
+    unique = {label: h for ax in axes for h, label in zip(*ax.get_legend_handles_labels())}
     handles = [
-        Line2D([], [], color=h.get_color(), ls=h.get_linestyle()) if isinstance(h, Line2D) else h
+        Line2D([], [], color=h.get_color(), ls=h.get_linestyle(), marker=h.get_marker(), ms=h.get_markersize())
+        if isinstance(h, Line2D) else h
         for h in unique.values()
     ]
-    return ax.legend(
+    if isinstance(target, Figure):
+        return target.legend(handles, unique.keys(), ncols=len(unique), loc="outside upper right", **kw)
+    return target.legend(
         handles, unique.keys(), ncols=len(unique),
         loc="lower right", bbox_to_anchor=(1, 1 + gap), borderaxespad=0, **kw,
     )
