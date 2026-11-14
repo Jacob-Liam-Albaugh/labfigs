@@ -30,8 +30,8 @@ lf.use()                                  # style; LaTeX text when latex is inst
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = panel height / width
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
 lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 shown) over a grey 95% band
-lf.paths(ax, x, samples, gradient=True)   # no grey band unless level=0.95; draws shaded in bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
-lf.paths(ax, x, samples, gradient="heat") # same bands, coloured from a ramp instead of the series colour
+lf.paths(ax, x, samples, gradient=True)   # no grey band unless level=0.95; heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
+lf.paths(ax, x, samples, gradient="C1")   # same bands in shades of one colour (any colour), or a ramp name ("viridis")
 ax.plot(x, y, color=lf.TRUE, label="True")
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
 lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per method
@@ -51,7 +51,7 @@ lf.save(fig, "out/name")                  # trims spines, writes name.pdf and na
 `intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position;
 `intervals(connect=True)` joins the dots.
 
-Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level="auto", gradient=False | True | ramp name)`,
+Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level="auto", gradient=False | True | colour | ramp name)`,
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
 spines (log axes), `use(tex=False)` for fast drafts.
@@ -73,7 +73,9 @@ a report. Do not pick colours by hand.
 An ordered sweep (pressure, noise level, step count) is not a set of methods: colour it with
 `lf.ramp(n, name)`, which returns `n` colours from dark to light. Ramps: `"heat"` (maroon to
 sand, the default), `"blues"` (ColorBrewer), `"viridis"`. Each stops before its pale end so
-thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`.
+thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`. Any colour works in
+place of a ramp name and gives shades of that colour (`lf.ramp(n, "C1")`,
+`gradient="tab:blue"`), so single-hue ramps need no entry of their own.
 
 2D fields use `lf.heatmap`: the same ramps, pale for low values and dark for high
 (`ramp="heat"` by default). A signed field (an error, a residual) takes `center=0`, which
@@ -104,10 +106,11 @@ methods apart.
   with `level=0.95`.
 - Use `gradient=True` when the draws are the only posterior in the panel. Next to another
   method's `ribbon` keep them flat; the dark core hides the ribbon's median line.
-- A ramp name (`gradient="heat"`, `"blues"`, `"viridis"`) shades the draws along that ramp
-  instead of the series colour. Use it to tell quantities apart, one ramp per quantity in
-  every figure of a report (temperature in the series colour, conductivity in `"heat"`).
-  The legend entry keeps the series `color`.
+- `gradient=True` is the heat ramp. Pass a colour for shades of that colour, or `"viridis"`.
+  `color=` is ignored once `gradient` is set. Use the choice to tell quantities apart, one
+  per quantity in every figure of a report (conductivity in heat, temperature in the
+  method's `"Cn"`). The legend entry takes the 1 sd band's colour; when one label is drawn
+  in two palettes across panels, the legend shows the last one.
 - At most one series per panel is shown as draws; every other method in that panel is a
   `ribbon`. Two sets of draws on top of each other hide both.
 - Sample paths need the draws: every sampling script saves its draws (`.npz`), not only

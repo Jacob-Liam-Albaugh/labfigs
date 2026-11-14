@@ -56,8 +56,14 @@ def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, **kw):
     return plt.subplots(nrows, ncols, figsize=(width, height), **kw)
 
 
+def shades(name):
+    if isinstance(name, str) and name in RAMPS:
+        return RAMPS[name]
+    return LinearSegmentedColormap.from_list("", ["white", name, "black"]), 0.9, 0.2
+
+
 def ramp(n, name="heat"):
-    cmap, dark, light = RAMPS[name]
+    cmap, dark, light = shades(name)
     return cmap(np.linspace(dark, light, n))
 
 
@@ -104,12 +110,11 @@ def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level="auto",
     keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
     if not gradient:
         return ax.plot(x, samples[keep].T, color=color, alpha=alpha or 0.1, **kw)
-    own = LinearSegmentedColormap.from_list("", ["black", color, "white"]), 0.1, 0.8
-    cmap, dark, light = RAMPS.get(gradient, own)
+    cmap, dark, light = shades("heat" if gradient is True else gradient)
     sigmas = np.abs(samples[keep] - samples.mean(0)) / (samples.std(0) + np.finfo(float).tiny)
     points = np.stack([np.broadcast_to(x, sigmas.shape), samples[keep]], -1)
     segments = np.stack([points[:, :-1], points[:, 1:]], 2).reshape(-1, 2, 2)
-    ax.plot([], [], color=color, label=kw.pop("label", None))
+    ax.plot([], [], color=cmap(dark + (light - dark) / 3), label=kw.pop("label", None))
     depth = np.minimum((sigmas[:, :-1] + sigmas[:, 1:]).ravel() // 2, 2) / 3 + 1 / 3
     central_last = np.argsort(-depth)
     shade = dark + (light - dark) * depth[central_last]
@@ -120,7 +125,7 @@ def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level="auto",
 
 
 def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):
-    cmap = RAMPS[ramp][0]
+    cmap = shades(ramp)[0]
     if center is not None:
         reach = np.nanmax(np.abs(z - center))
         cmap, kw = DIVERGING, {"vmin": center - reach, "vmax": center + reach, **kw}
