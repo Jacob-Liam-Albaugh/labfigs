@@ -94,8 +94,10 @@ def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
     return ax.errorbar(np.asarray(x) + shift, mid, [mid - lo, hi - mid], fmt=fmt, ms=3, **kw)
 
 
-def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level=0.95, gradient=False, **kw):
+def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level="auto", gradient=False, **kw):
     samples = np.asarray(samples)
+    if level == "auto":
+        level = None if gradient else 0.95
     if level:
         percent = r"\%" if plt.rcParams["text.usetex"] else "%"
         band(ax, x, samples, level, color=REFERENCE, alpha=0.3, lw=0, label=f"{100 * level:g}{percent} interval")
