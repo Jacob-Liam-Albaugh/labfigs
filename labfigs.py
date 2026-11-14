@@ -4,6 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
@@ -15,9 +16,10 @@ TRUE = "black"
 SERIES = [POSTERIOR, PREDICTIVE, "tab:blue", "tab:orange", "tab:green", "tab:purple", "tab:brown", "tab:olive"]
 MUTED = ["#BC5A55", "#66909F", "#DBA3AD", "#BF6468", "#6B7883", "#9A7078", "#8795A2"]
 HEAT = LinearSegmentedColormap.from_list(
-    "heat", ["#8E063B", "#B9534C", "#DA8459", "#EEAB65", "#F6C971", "#F1DE81", "#E2E6BD"])
-# stops each ramp before the end that is too pale to read as a line on white
-RAMPS = {"heat": (HEAT, 0.0, 0.6), "blues": (plt.get_cmap("Blues_r"), 0.0, 0.65), "viridis": (plt.get_cmap("viridis"), 0.0, 0.95)}
+    "heat", ["#E2E6BD", "#F1DE81", "#F6C971", "#EEAB65", "#DA8459", "#B9534C", "#8E063B"])
+DIVERGING = LinearSegmentedColormap.from_list("diverging", [PREDICTIVE, "white", POSTERIOR])
+# pairs each colormap with the stretch (dark end, light end) that still reads as a line on white
+RAMPS = {"heat": (HEAT, 1.0, 0.4), "blues": (plt.get_cmap("Blues"), 1.0, 0.35), "viridis": (plt.get_cmap("viridis"), 0.0, 0.95)}
 TEXT_WIDTH = 6.5
 
 
@@ -92,13 +94,35 @@ def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
     return ax.errorbar(np.asarray(x) + shift, mid, [mid - lo, hi - mid], fmt=fmt, ms=3, **kw)
 
 
-def paths(ax, x, samples, color=PREDICTIVE, alpha=0.1, draws=100, level=0.95, **kw):
+def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level=0.95, gradient=False, **kw):
     samples = np.asarray(samples)
     if level:
         percent = r"\%" if plt.rcParams["text.usetex"] else "%"
         band(ax, x, samples, level, color=REFERENCE, alpha=0.3, lw=0, label=f"{100 * level:g}{percent} interval")
     keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
-    return ax.plot(x, samples[keep].T, color=color, alpha=alpha, **kw)
+    if not gradient:
+        return ax.plot(x, samples[keep].T, color=color, alpha=alpha or 0.1, **kw)
+    cmap = LinearSegmentedColormap.from_list("", ["black", color])
+    rank = samples.argsort(0).argsort(0) / (len(samples) - 1)
+    depth = np.abs(2 * rank - 1)[keep]
+    points = np.stack([np.broadcast_to(x, depth.shape), samples[keep]], -1)
+    segments = np.stack([points[:, :-1], points[:, 1:]], 2).reshape(-1, 2, 2)
+    ax.plot([], [], color=color, label=kw.pop("label", None))
+    shade = 0.4 + 0.3 * (depth[:, :-1] + depth[:, 1:]).ravel()
+    lines = LineCollection(segments, array=shade, cmap=cmap, clim=(0, 1), alpha=alpha or 0.3, **kw)
+    ax.add_collection(lines)
+    ax.autoscale_view()
+    return lines
+
+
+def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):
+    cmap = RAMPS[ramp][0]
+    if center is not None:
+        reach = np.nanmax(np.abs(z - center))
+        cmap, kw = DIVERGING, {"vmin": center - reach, "vmax": center + reach, **kw}
+    mesh = ax.pcolormesh(x, y, z, cmap=cmap, shading="auto", rasterized=True, **kw)
+    ax.figure.colorbar(mesh, ax=ax, label=label, pad=0.03).outline.set_visible(False)
+    return mesh
 
 
 def split(ax, x, overshoot=0.12):
@@ -124,7 +148,8 @@ def legend_above(target, gap=0.18, **kw):
 def save(fig, path, trim=True, formats=("pdf", "png")):
     if trim:
         for ax in fig.axes:
-            sns.despine(ax=ax, offset=5, trim=True)
+            if ax.get_label() != "<colorbar>":
+                sns.despine(ax=ax, offset=5, trim=True)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     for ext in formats:

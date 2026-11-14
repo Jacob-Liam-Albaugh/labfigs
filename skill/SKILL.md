@@ -30,6 +30,7 @@ lf.use()                                  # style; LaTeX text when latex is inst
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = panel height / width
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
 lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 shown) over a grey 95% band
+lf.paths(ax, x, samples, gradient=True)   # same, each draw dark near the median, its colour at the edge
 ax.plot(x, y, color=lf.TRUE, label="True")
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
 lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per method
@@ -40,6 +41,8 @@ lf.legend_above(axes[0])                  # one-row legend above the top panel
 lf.legend_above(fig)                      # same, for a grid: labels deduplicated over all panels
 for y, c in zip(curves, lf.ramp(len(curves), "heat")):  # ordered sweep, dark to light
     ax.plot(x, y, color=c)
+lf.heatmap(ax, x, y, z, vmin=0, vmax=1)   # 2D field with its colourbar; z has shape (len(y), len(x))
+lf.heatmap(ax, x, y, error, center=0)     # signed field: teal below, white at 0, crimson above
 lf.save(fig, "out/name")                  # trims spines, writes name.pdf and name.png
 ```
 
@@ -47,9 +50,10 @@ lf.save(fig, "out/name")                  # trims spines, writes name.pdf and na
 `intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position;
 `intervals(connect=True)` joins the dots.
 
-Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=0.95)`,
+Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=0.95, gradient=False)`,
+`heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
-spines (heatmaps, log axes), `use(tex=False)` for fast drafts.
+spines (log axes), `use(tex=False)` for fast drafts.
 
 ## Colours
 
@@ -70,6 +74,12 @@ An ordered sweep (pressure, noise level, step count) is not a set of methods: co
 sand, the default), `"blues"` (ColorBrewer), `"viridis"`. Each stops before its pale end so
 thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`.
 
+2D fields use `lf.heatmap`: the same ramps, pale for low values and dark for high
+(`ramp="heat"` by default). A signed field (an error, a residual) takes `center=0`, which
+switches to the teal-white-crimson map with limits symmetric about the centre. Panels that
+are compared against each other share `vmin` and `vmax`. Set `aspect="equal"` on the axes
+when x and y are the same physical quantity. Overlay sensors with `lf.data`.
+
 `lf.MUTED` is a softer seven-colour set (brick red, steel teal, dusty pink, rose, slate,
 mauve, blue-grey). Its neighbours are close in hue, so use it for light/dark pairs of one
 method or a quiet figure, via `lf.use(series=lf.MUTED)`; keep the default cycle for telling
@@ -87,6 +97,8 @@ methods apart.
 - `paths` puts a neutral grey credible band under the draws by default, computed from all
   draws. Pass `level=None` when the panel already has a band (another method's `ribbon`, a
   `band` of the same posterior).
+- Use `gradient=True` when the draws are the only posterior in the panel. Next to another
+  method's `ribbon` keep them flat; the dark core hides the ribbon's median line.
 - At most one series per panel is shown as draws; every other method in that panel is a
   `ribbon`. Two sets of draws on top of each other hide both.
 - Sample paths need the draws: every sampling script saves its draws (`.npz`), not only
@@ -101,16 +113,11 @@ touching the project's dependencies:
 uv run --with-editable "$HOME/Documents/Predictive Science Lab/labfigs" python scripts/plot.py
 ```
 
-Worked example: `examples/duffing_311.py` in the library reproduces thesis Fig. 3.11.
+Worked examples in the library: `examples/duffing_311.py` reproduces thesis Fig. 3.11,
+`examples/field.py` shows gradient draws and a truth / mean / error field figure,
+`examples/palettes.py` shows the ramps.
 
 ## Not covered yet
 
-Todo, in this order:
-
-1. Gradient draws: `paths` lines whose colour or saturation changes with distance from the
-   median, so the teal draws fade or shift as they move away from the centre instead of
-   sharing one flat colour.
-2. 2D plots: heatmaps and other field plots, using the colormaps in `lf.RAMPS`.
-
-Also missing: corner plots and one-call recipes for whole figure types. Ask before inventing
-a style for any of these.
+Corner plots, contour plots, and one-call recipes for whole figure types. Ask before
+inventing a style for these.
