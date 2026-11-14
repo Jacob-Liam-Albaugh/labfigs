@@ -72,13 +72,16 @@ a report. Do not pick colours by hand.
 
 An ordered sweep (pressure, noise level, step count) is not a set of methods: colour it with
 `lf.ramp(n, name)`, which returns `n` colours from dark to light. Ramps: `"heat"` (maroon to
-sand, the default), `"blues"` (ColorBrewer), `"viridis"`. Each stops before its pale end so
-thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`. Any colour works in
+sand, the default), `"blues"` and `"ylgnbu"` (ColorBrewer), `"viridis"`, `"magma"`, `"plasma"`, `"cividis"`
+(colour-blind safe), `"rocket"`, `"mako"`, `"flare"`, `"crest"`. Each stops before its pale
+end so thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`. Any colour works in
 place of a ramp name and gives shades of that colour (`lf.ramp(n, "C1")`,
 `gradient="tab:blue"`), so single-hue ramps need no entry of their own.
 
 2D fields use `lf.heatmap`: the same ramps, pale for low values and dark for high
-(`ramp="heat"` by default). A signed field (an error, a residual) takes `center=0`, which
+(`ramp="heat"` by default; ramps that run dark to light, such as `"mako"` and `"viridis"`,
+are flipped to match). Different quantities in one figure take different ramps (a field
+and its standard deviation). A signed field (an error, a residual) takes `center=0`, which
 switches to the teal-white-crimson map with limits symmetric about the centre. Panels that
 are compared against each other share `vmin` and `vmax`. Set `aspect="equal"` on the axes
 when x and y are the same physical quantity. Overlay sensors with `lf.data`.
@@ -106,7 +109,7 @@ methods apart.
   with `level=0.95`.
 - Use `gradient=True` when the draws are the only posterior in the panel. Next to another
   method's `ribbon` keep them flat; the dark core hides the ribbon's median line.
-- `gradient=True` is the heat ramp. Pass a colour for shades of that colour, or `"viridis"`.
+- `gradient=True` is the heat ramp. Pass a colour for shades of that colour, or a ramp name.
   `color=` is ignored once `gradient` is set. Use the choice to tell quantities apart, one
   per quantity in every figure of a report (conductivity in heat, temperature in the
   method's `"Cn"`). The legend entry takes the 1 sd band's colour; when one label is drawn
@@ -126,8 +129,8 @@ uv run --with-editable "$HOME/Documents/Predictive Science Lab/labfigs" python s
 ```
 
 Worked examples in the library: `examples/duffing_311.py` reproduces thesis Fig. 3.11,
-`examples/field.py` shows gradient draws and a truth / mean / error field figure,
-`examples/palettes.py` shows the ramps.
+`examples/field.py` shows gradient draws in every ramp and a truth / mean / sd / error
+field figure plus the same field in every ramp, `examples/palettes.py` shows every ramp as a sweep.
 
 ## Not covered yet
 

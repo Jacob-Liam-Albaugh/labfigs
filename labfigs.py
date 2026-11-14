@@ -19,7 +19,11 @@ HEAT = LinearSegmentedColormap.from_list(
     "heat", ["#E2E6BD", "#F1DE81", "#F6C971", "#EEAB65", "#DA8459", "#B9534C", "#8E063B"])
 DIVERGING = LinearSegmentedColormap.from_list("diverging", [PREDICTIVE, "white", POSTERIOR])
 # pairs each colormap with the stretch (dark end, light end) that still reads as a line on white
-RAMPS = {"heat": (HEAT, 1.0, 0.4), "blues": (plt.get_cmap("Blues"), 1.0, 0.35), "viridis": (plt.get_cmap("viridis"), 0.0, 0.95)}
+STRETCH = {
+    "Blues": (1.0, 0.35), "viridis": (0.0, 0.95), "magma": (0.15, 0.85), "plasma": (0.0, 0.9), "cividis": (0.0, 0.95),
+    "rocket": (0.15, 0.85), "mako": (0.15, 0.85), "flare": (1.0, 0.0), "crest": (1.0, 0.0), "YlGnBu": (1.0, 0.3),
+}
+RAMPS = {"heat": (HEAT, 1.0, 0.4)} | {name.lower(): (plt.get_cmap(name), *ends) for name, ends in STRETCH.items()}
 TEXT_WIDTH = 6.5
 
 
@@ -125,7 +129,8 @@ def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level="auto",
 
 
 def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):
-    cmap = shades(ramp)[0]
+    cmap, dark, light = shades(ramp)
+    cmap = cmap if dark > light else cmap.reversed()
     if center is not None:
         reach = np.nanmax(np.abs(z - center))
         cmap, kw = DIVERGING, {"vmin": center - reach, "vmax": center + reach, **kw}
