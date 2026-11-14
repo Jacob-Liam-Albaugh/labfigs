@@ -6,7 +6,7 @@ import numpy as np
 import labfigs as lf
 
 rng = np.random.default_rng(1)
-out = Path(__file__).parent.parent / "out"
+out = Path(__file__).parent
 lf.use()
 
 x = np.linspace(0, 1, 200)

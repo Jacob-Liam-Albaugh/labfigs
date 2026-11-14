@@ -64,7 +64,23 @@ python examples/field.py
 python examples/palettes.py
 ```
 
-They write to `out/`: the thesis Fig. 3.11 layout, gradient draws and a 2D field in every ramp, and every ramp as a line sweep.
+Each writes its figure next to the script.
+
+The thesis Fig. 3.11 layout (`duffing_311.py`):
+
+![Posterior and posterior predictive](examples/duffing_311.png)
+
+Sample draws, flat and shaded by standard deviations from the mean in every ramp (`field.py`):
+
+![Gradient draws](examples/gradient_draws.png)
+
+A 2D field in every ramp (`field.py`):
+
+![Fields](examples/field.png)
+
+Every ramp as a line sweep (`palettes.py`):
+
+![Ramps](examples/palettes.png)
 
 ## Claude Code skill
 
