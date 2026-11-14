@@ -129,8 +129,8 @@ uv run --with-editable "$HOME/Documents/Predictive Science Lab/labfigs" python s
 ```
 
 Worked examples in the library: `examples/duffing_311.py` reproduces thesis Fig. 3.11,
-`examples/field.py` shows gradient draws in every ramp and a truth / mean / sd / error
-field figure plus the same field in every ramp, `examples/palettes.py` shows every ramp as a sweep.
+`examples/field.py` shows gradient draws and a 2D field in every ramp,
+`examples/palettes.py` shows every ramp as a sweep.
 
 ## Not covered yet
 
