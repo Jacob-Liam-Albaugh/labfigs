@@ -30,7 +30,8 @@ lf.use()                                  # style; LaTeX text when latex is inst
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = panel height / width
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
 lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 shown) over a grey 95% band
-lf.paths(ax, x, samples, gradient=True)   # same, each draw dark near the median, its colour at the edge
+lf.paths(ax, x, samples, gradient=True)   # same, draws shaded in bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
+lf.paths(ax, x, samples, gradient="heat") # same bands, coloured from a ramp instead of the series colour
 ax.plot(x, y, color=lf.TRUE, label="True")
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
 lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per method
@@ -50,7 +51,7 @@ lf.save(fig, "out/name")                  # trims spines, writes name.pdf and na
 `intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position;
 `intervals(connect=True)` joins the dots.
 
-Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=0.95, gradient=False)`,
+Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=0.95, gradient=False | True | ramp name)`,
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
 spines (log axes), `use(tex=False)` for fast drafts.
@@ -97,8 +98,15 @@ methods apart.
 - `paths` puts a neutral grey credible band under the draws by default, computed from all
   draws. Pass `level=None` when the panel already has a band (another method's `ribbon`, a
   `band` of the same posterior).
+- `gradient` shades each draw by its distance from the pointwise mean in standard deviations:
+  three flat bands, under 1, 1 to 2, over 2. The pale band starts about where the grey 95%
+  interval ends.
 - Use `gradient=True` when the draws are the only posterior in the panel. Next to another
   method's `ribbon` keep them flat; the dark core hides the ribbon's median line.
+- A ramp name (`gradient="heat"`, `"blues"`, `"viridis"`) shades the draws along that ramp
+  instead of the series colour. Use it to tell quantities apart, one ramp per quantity in
+  every figure of a report (temperature in the series colour, conductivity in `"heat"`).
+  The legend entry keeps the series `color`.
 - At most one series per panel is shown as draws; every other method in that panel is a
   `ribbon`. Two sets of draws on top of each other hide both.
 - Sample paths need the draws: every sampling script saves its draws (`.npz`), not only

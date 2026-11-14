@@ -102,14 +102,16 @@ def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level=0.95, g
     keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
     if not gradient:
         return ax.plot(x, samples[keep].T, color=color, alpha=alpha or 0.1, **kw)
-    cmap = LinearSegmentedColormap.from_list("", ["black", color])
-    rank = samples.argsort(0).argsort(0) / (len(samples) - 1)
-    depth = np.abs(2 * rank - 1)[keep]
-    points = np.stack([np.broadcast_to(x, depth.shape), samples[keep]], -1)
+    own = LinearSegmentedColormap.from_list("", ["black", color, "white"]), 0.1, 0.8
+    cmap, dark, light = RAMPS.get(gradient, own)
+    sigmas = np.abs(samples[keep] - samples.mean(0)) / (samples.std(0) + np.finfo(float).tiny)
+    points = np.stack([np.broadcast_to(x, sigmas.shape), samples[keep]], -1)
     segments = np.stack([points[:, :-1], points[:, 1:]], 2).reshape(-1, 2, 2)
     ax.plot([], [], color=color, label=kw.pop("label", None))
-    shade = 0.4 + 0.3 * (depth[:, :-1] + depth[:, 1:]).ravel()
-    lines = LineCollection(segments, array=shade, cmap=cmap, clim=(0, 1), alpha=alpha or 0.3, **kw)
+    depth = np.minimum((sigmas[:, :-1] + sigmas[:, 1:]).ravel() // 2, 2) / 3 + 1 / 3
+    central_last = np.argsort(-depth)
+    shade = dark + (light - dark) * depth[central_last]
+    lines = LineCollection(segments[central_last], array=shade, cmap=cmap, clim=(0, 1), alpha=alpha or 0.4, **kw)
     ax.add_collection(lines)
     ax.autoscale_view()
     return lines

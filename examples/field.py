@@ -13,11 +13,11 @@ x = np.linspace(0, 1, 200)
 k = np.arange(1, 6)[None, :, None]
 waves = rng.normal(size=(2000, 5, 1)) / k * np.sin(np.pi * k * x + rng.uniform(0, 2 * np.pi, (2000, 5, 1)))
 draws = np.sin(2 * np.pi * x) + 0.35 * waves.sum(1)
-fig, axes = lf.subplots(1, 2, aspect=0.7, sharey=True)
-for ax, gradient in zip(axes, (False, True)):
+fig, axes = lf.subplots(1, 3, width=9.75, aspect=0.7, sharey=True)
+for ax, gradient in zip(axes, (False, True, "heat")):
     lf.paths(ax, x, draws, gradient=gradient, label="Posterior draws")
     ax.plot(x, np.sin(2 * np.pi * x), color=lf.TRUE, ls="--", label="True")
-    ax.set(title="gradient" if gradient else "flat", xlabel="$x$", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
+    ax.set(title=f"gradient={gradient}", xlabel="$x$", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
 axes[0].set_ylabel("$u$")
 lf.legend_above(fig)
 lf.save(fig, out / "gradient_draws")
