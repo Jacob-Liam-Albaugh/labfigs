@@ -24,6 +24,9 @@ plot elements that recur. Source lives at
    as done: `rsvg-convert -w 1600 name.svg -o <scratch>/name.png`, then open that preview.
    The preview is for checking, never the deliverable.
 7. Run the design checklist below on every figure that goes into a paper or report.
+8. When a request goes against the checklist, make the figure as asked and say so. Never
+   change the request silently and never stay silent. See "When the request goes against
+   the guidelines".
 
 ## API
 
@@ -182,6 +185,8 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
   per quantity in every figure of a report (conductivity in heat, temperature in the
   method's `"Cn"`). The legend entry takes the 1 sd band's colour; when one label is drawn
   in two palettes across panels, the legend shows the last one.
+- Draws hide a ribbon narrower than their spread. When band widths are what is compared,
+  every method is a `ribbon`.
 - At most one series per panel is shown as draws; every other method in that panel is a
   `ribbon`. Two sets of draws on top of each other hide both.
 - Sample paths need the draws: every sampling script saves its draws (`.npz`), not only
@@ -224,7 +229,9 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 2. Range. Set `xlim` and `ylim` around the data with an even margin, and explicit ticks.
 3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
-   share a unit; otherwise trimmed spines and no grid.
+   share a unit; otherwise trimmed spines and no grid. Panel height is panel width times
+   `aspect`, so past three columns raise `aspect` in step (`aspect=0.8 * ncols / 3`) and
+   cap the ticks (`ax.locator_params(nbins=4)`).
 5. Colour. Posterior against predictive keeps the house crimson then teal. Other series
    take clearly different hues at moderate saturation (`lf.MUTED`, or a set from
    `lf.combos(n, vivid=0.5)`); an ordered sweep takes shades of one hue (`lf.ramp(n, colour)`).
@@ -236,6 +243,29 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 
 Then render, look, and repeat. When the request does not say, default to: full text width
 (6.5 in), 95% intervals, flat draws with no interval under them, axis labels with units, no title.
+
+### When the request goes against the guidelines
+
+The figure is the user's, so a poor request still gets its figure, exactly as asked. Check
+the request against the checklist before drawing and the rendered figure after it. For
+each conflict, report one line next to the figure: the checklist item, what the reader
+loses, and the alternative that complies. Put the same lines in the write-up when there is
+one. Offer the alternative; build it only when asked. No flag means the request passed.
+
+| Request | Item | Offer instead |
+|---|---|---|
+| Methods superimposed whose bands coincide | 1, 3 | one panel per method, or plot the difference or the band width |
+| The same data in two figures | 2 | one figure in the text, the other to an appendix |
+| A figure per case, for many cases | 1, 2 | one or two representative cases, the rest to an appendix |
+| More than four columns at text width | 6 | fewer cases, two rows of panels, or a wider page |
+| One case sets the range for the rest | 13 | a log axis, or that case in its own panel |
+| Many coloured lines in one panel | 3, 9 | the mass in grey, colour for the few that matter |
+| A colour per series that changes between figures | 10 | one `"Cn"` per method across the report |
+| Rainbow, neon, a pie chart, 3D for flat data | 11, 12, 17 | a ramp, a muted set, bars, a heatmap |
+| A figure with no caption | 5 | a caption that says what to see |
+
+Example: "Made `exp-three` as asked. It goes against item 3: the three bands coincide and
+read as one, so the pinch at the sensors is lost. One panel per method would show it."
 
 ## Design checklist
 
