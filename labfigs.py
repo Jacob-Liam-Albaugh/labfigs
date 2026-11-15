@@ -55,9 +55,15 @@ def use(tex=None, font_size=10, series=SERIES):
     })
 
 
-def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, **kw):
-    height = nrows * (width / ncols) * aspect
-    return plt.subplots(nrows, ncols, figsize=(width, height), **kw)
+def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, n=None, **kw):
+    figsize = (width, nrows * (width / ncols) * aspect)
+    if n is None:
+        return plt.subplots(nrows, ncols, figsize=figsize, **kw)
+    fig = plt.figure(figsize=figsize, **kw)
+    grid = fig.add_gridspec(nrows, 2 * ncols)
+    indent = nrows * ncols - n
+    spots = [(i // ncols, 2 * (i % ncols) + indent * (i // ncols == nrows - 1)) for i in range(n)]
+    return fig, np.array([fig.add_subplot(grid[row, col:col + 2]) for row, col in spots])
 
 
 def shades(name):
@@ -139,11 +145,19 @@ def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):
     return mesh
 
 
+def density(ax, samples, fill=False, **kw):
+    return sns.kdeplot(x=np.asarray(samples), ax=ax, fill=fill, **kw)
+
+
+def shade(ax):
+    ax.set_facecolor("0.85")
+
+
 def split(ax, x, overshoot=0.12):
     return ax.axvline(x, -overshoot, 1 + overshoot, color=TRUE, ls="--", lw=0.8, clip_on=False)
 
 
-def legend_above(target, gap=0.18, **kw):
+def legend_above(target, gap=0.18, ncols=None, **kw):
     axes = target.axes if isinstance(target, Figure) else [target]
     unique = {label: h for ax in axes for h, label in zip(*ax.get_legend_handles_labels())}
     handles = [
@@ -152,9 +166,9 @@ def legend_above(target, gap=0.18, **kw):
         for h in unique.values()
     ]
     if isinstance(target, Figure):
-        return target.legend(handles, unique.keys(), ncols=len(unique), loc="outside upper right", **kw)
+        return target.legend(handles, unique.keys(), ncols=ncols or len(unique), loc="outside upper right", **kw)
     return target.legend(
-        handles, unique.keys(), ncols=len(unique),
+        handles, unique.keys(), ncols=ncols or len(unique),
         loc="lower right", bbox_to_anchor=(1, 1 + gap), borderaxespad=0, **kw,
     )
 

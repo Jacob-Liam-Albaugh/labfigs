@@ -40,6 +40,10 @@ lf.trace(ax, x, y, label="76 Torr")       # dots joined by a line (convergence, 
 lf.intervals(ax, x, lo, mid, hi, shift=dx)  # dot with a vertical 95% bar per x
 lf.legend_above(axes[0])                  # one-row legend above the top panel
 lf.legend_above(fig)                      # same, for a grid: labels deduplicated over all panels
+lf.legend_above(fig, ncols=3)             # wrap a long legend (five or more entries) onto two rows
+fig, axes = lf.subplots(2, 3, n=5)        # five panels, short bottom row centred; axes comes back flat
+lf.density(ax, samples, label="SVI")      # density curve of draws; fill=True for a filled one
+lf.shade(ax)                              # grey background marking a panel as different (unconditioned, held out)
 for y, c in zip(curves, lf.ramp(len(curves), "heat")):  # ordered sweep, dark to light
     ax.plot(x, y, color=c)
 lf.heatmap(ax, x, y, z, vmin=0, vmax=1)   # 2D field with its colourbar; z has shape (len(y), len(x))
@@ -100,6 +104,13 @@ methods apart.
   grid, a column title names the case (`ax.set(title="76 Torr")` on the top row only).
 - `band` (crimson, α 0.5) is for one posterior; `ribbon` is for several methods overlaid.
 - Draw order: band, sample paths, truth.
+- A true parameter value is a plain line: `ax.axhline(v, color=lf.TRUE, ls="--", label="True")`,
+  or `ax.axvline` on a density. A reference method's interval across a sweep is
+  `ax.axhspan(lo, hi, color=lf.REFERENCE, alpha=0.3, lw=0, label="NUTS")`.
+- A panel showing two named quantities gets two titles in their colours:
+  `ax.set_title(a, loc="left", color="C1")` and `ax.set_title(b, loc="right", color="C0")`.
+- Plot large values in scaled units and put the scale in the label
+  (`r"Iterations ($\times 10^6$)"`), never matplotlib's offset text.
 - `paths` puts a neutral grey credible band under the draws by default, computed from all
   draws. Pass `level=None` when the panel already has a band (another method's `ribbon`, a
   `band` of the same posterior).
@@ -130,7 +141,9 @@ uv run --with-editable "$HOME/Documents/Predictive Science Lab/labfigs" python s
 
 Worked examples in the library: `examples/duffing_311.py` reproduces thesis Fig. 3.11,
 `examples/field.py` shows gradient draws and a 2D field in every ramp,
-`examples/palettes.py` shows every ramp as a sweep.
+`examples/palettes.py` shows every ramp as a sweep, `examples/hao_figures.py` has the other
+thesis figure types: parameter intervals over a sweep (Fig. 3.2), densities per method
+(Fig. 6.2, 4.6), a grid with shaded panels (Fig. 4.9), convergence traces (Fig. 6.7).
 
 ## Not covered yet
 

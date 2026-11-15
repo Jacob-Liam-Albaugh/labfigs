@@ -64,6 +64,10 @@ python examples/field.py
 python examples/palettes.py
 ```
 
+```bash
+python examples/hao_figures.py
+```
+
 Each writes its figure next to the script.
 
 The thesis Fig. 3.11 layout (`duffing_311.py`):
@@ -81,6 +85,22 @@ A 2D field in every ramp (`field.py`):
 Every ramp as a line sweep (`palettes.py`):
 
 ![Ramps](examples/palettes.png)
+
+The other figure types of Hao's thesis, on synthetic data (`hao_figures.py`). Parameter intervals over a sweep, as in Fig. 3.2:
+
+![Intervals](examples/intervals.png)
+
+Densities per method and filled, as in Fig. 6.2 and 4.6:
+
+![Densities](examples/densities.png)
+
+A grid with shaded panels and two-colour titles, as in Fig. 4.9:
+
+![Shaded panels](examples/shaded_panels.png)
+
+Convergence traces, as in Fig. 6.7:
+
+![Convergence](examples/convergence.png)
 
 ## Claude Code skill
 
