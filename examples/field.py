@@ -13,7 +13,7 @@ x = np.linspace(0, 1, 200)
 k = np.arange(1, 6)[None, :, None]
 waves = rng.normal(size=(2000, 5, 1)) / k * np.sin(np.pi * k * x + rng.uniform(0, 2 * np.pi, (2000, 5, 1)))
 draws = np.sin(2 * np.pi * x) + 0.35 * waves.sum(1)
-fig, axes = lf.subplots(3, 5, width=13, aspect=0.75, sharex=True, sharey=True)
+fig, axes = lf.subplots(4, 4, width=10.4, aspect=0.75, sharex=True, sharey=True)
 for ax, gradient in zip(axes.flat, (False, *lf.RAMPS, lf.POSTERIOR, lf.PREDICTIVE, "tab:blue")):
     lf.paths(ax, x, draws, gradient=gradient, label="Posterior draws")
     ax.plot(x, np.sin(2 * np.pi * x), color=lf.TRUE, ls="--", label="True")
@@ -22,13 +22,14 @@ fig.supxlabel("$x$")
 fig.supylabel("$u$")
 lf.legend_above(fig)
 lf.save(fig, out / "gradient_draws")
-assert ["interval" in " ".join(ax.get_legend_handles_labels()[1]) for ax in axes.flat] == [True] + 14 * [False]
+assert ["interval" in " ".join(ax.get_legend_handles_labels()[1]) for ax in axes.flat] == [True] + 15 * [False]
 
 X, Y = np.meshgrid(np.linspace(0, 1, 80), np.linspace(0, 1, 80))
 R = np.hypot(X - 0.5, Y - 0.5)
 waves = sum(np.cos(2 * np.pi * (a * X + b * Y) + c) for a, b, c in rng.uniform(-2, 2, (6, 3)))
 fields = [
     np.exp(-((X - 0.3) ** 2 + (Y - 0.6) ** 2) / 0.03) + 0.6 * np.exp(-((X - 0.7) ** 2 + (Y - 0.3) ** 2) / 0.05),
+    np.exp(-R ** 2 / 0.02),
     np.exp(-(X - Y) ** 2 / 0.02),
     np.sin(2 * np.pi * X) * np.sin(2 * np.pi * Y) / 2 + 0.5,
     np.exp(-(R - 0.3) ** 2 / 0.005),
@@ -42,7 +43,7 @@ fields = [
 ]
 panels = [(name, z, {"ramp": name, "vmin": 0, "vmax": 1}) for name, z in zip(lf.RAMPS, fields, strict=True)]
 panels.append(("center=0", 0.08 * np.sin(5 * X) * np.cos(4 * Y), {"center": 0}))
-fig, axes = lf.subplots(3, 4, width=9.75, aspect=0.9, sharex=True, sharey=True)
+fig, axes = lf.subplots(3, 5, width=12.2, aspect=0.9, n=len(panels))
 for ax, (title, z, kw) in zip(axes.flat, panels):
     lf.heatmap(ax, X, Y, z, **kw)
     ax.set(title=title, xticks=[0, 0.5, 1], yticks=[0, 0.5, 1], aspect="equal")

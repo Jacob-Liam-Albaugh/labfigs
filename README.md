@@ -76,6 +76,10 @@ python examples/hao_replicas.py
 python examples/feasible_regions.py
 ```
 
+```bash
+python examples/churkin.py
+```
+
 Each writes its figure next to the script.
 
 The thesis Fig. 3.11 layout (`duffing_311.py`):
@@ -126,6 +130,14 @@ Feasible regions with nested limit contours, a level key and a fine grid (`feasi
 
 ![Feasible regions](examples/feasible_regions.svg)
 
+Churkin's two examples redrawn (`churkin.py`). Markers with darker edges, neutral trend lines and the mono font:
+
+![Edged scatter](examples/edged_scatter.svg)
+
+A 3D surface on the dark page, in the sunset ramp:
+
+![3D surface](examples/surface_3d.svg)
+
 ## Design checklist
 
 Before a figure goes into a paper:
@@ -138,7 +150,7 @@ Before a figure goes into a paper:
 - Use a ramp for ordered data, never a rainbow. Red reads as wrong and green as right.
 - Put the legend at the top, and write a caption that says what to see.
 - Vector only: `lf.save` writes SVG. Add `formats=("svg", "pdf")` for LaTeX.
-- Avoid pie charts and 3D.
+- Avoid pie charts. Use 3D only when the surface's shape is the message (`lf.surface`).
 - Expect several rounds of render, look, fix.
 
 The full checklist is in [skill/SKILL.md](skill/SKILL.md).
@@ -146,7 +158,7 @@ The full checklist is in [skill/SKILL.md](skill/SKILL.md).
 ## References
 
 - Kairui Hao's thesis and filter paper figures: the source of the house style (colours, trimmed spines, legend above).
-- Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`) and the feasible-region example layout. His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
+- Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`), the feasible-region example layout, the purple-teal set, the sunset ramp, the dark page, edged markers (`lf.points`) and the 3D surface (`lf.surface`). His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
 
 ## Claude Code skill
 

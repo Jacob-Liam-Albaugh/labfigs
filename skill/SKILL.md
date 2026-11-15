@@ -59,6 +59,9 @@ lf.contours(ax, x, y, z, levels, colors, within=free)  # thin contour lines, cli
 lf.level_key(ax, labels, colors, "Limit:")  # row of boxed level values above the panel, one colour each
 lf.ramp(n, ("crimson", "C2"))             # n colours blending from one colour to another
 lf.grid(ax)                               # fine major and minor grid for reading values off; save with trim=False
+lf.points(ax, x, y, color="C0", label="Setosa")  # scatter markers with a darker edge of their own hue, drawn above lines
+fig, ax = lf.subplots(aspect=0.75, subplot_kw={"projection": "3d"})
+lf.surface(ax, x, y, z, ramp="sunset", label="Price")  # 3D surface with its colourbar; x, y, z are 2D grids
 lf.save(fig, "out/name")                  # trims spines, writes name.svg
 ```
 
@@ -70,6 +73,11 @@ Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, l
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
 spines (log axes), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
+
+Looks, all set in the one `lf.use` call: `use(font="mono")` sets every label in Courier
+(Churkin's look; LaTeX is off, so write plain-text labels), `use(dark=True)` gives a dark
+teal page with a soft glow and light ink (slides and posters, not papers),
+`use(series=lf.PURPLE_TEAL)` or `use(series=lf.MUTED)` swaps the colour cycle.
 
 ## Colours
 
@@ -105,6 +113,13 @@ when x and y are the same physical quantity. Overlay sensors with `lf.data`.
 mauve, blue-grey). Its neighbours are close in hue, so use it for light/dark pairs of one
 method or a quiet figure, via `lf.use(series=lf.MUTED)`; keep the default cycle for telling
 methods apart.
+
+`lf.PURPLE_TEAL` is Churkin's three-colour set: purple, grey, teal. `"C0"` and `"C2"` are two
+data subsets and `"C1"` is the neutral for trend lines, via `lf.use(series=lf.PURPLE_TEAL)`.
+`lf.points` gives each marker an edge in a darker shade of its fill (`lf.darker(color)`).
+The `"sunset"` ramp (deep purple to orange) holds its lowest tenth at one colour, so a
+surface's floor stays flat and only the peaks glow. Under `use(dark=True)`, `heatmap` and
+`surface` run dark for low values and bright for high; on white they run pale to dark.
 
 ## Conventions
 
@@ -148,6 +163,47 @@ methods apart.
   `lf.save(trim=False)`. When each panel has its own colour, each panel gets its own legend
   (`lf.legend_above(ax, ncols=1, frameon=False)`); crimson is the shared tight end of every blend.
 - Panel letters go under the x label: `ax.set_xlabel("$P$ (kW)\n(a)")`.
+- A scatter of two measured quantities: `lf.points` per subset, trend lines in the neutral
+  colour (solid and dashed, not two colours), `lf.grid`, `lf.save(trim=False)`.
+- A 3D surface carries no z label; the colourbar's `label=` names the quantity. Set the view
+  with `ax.view_init(elev=30, azim=-60)` and keep ticks sparse.
+
+## From a request to a figure
+
+A request such as "make a graph showing ..." leaves most choices open. Fill them in this
+order, which is Churkin's eight steps from a default plot to a finished one. `lf.use()`,
+the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only decides 1, 2,
+4 and 8.
+
+0. Message. Write the one sentence the figure must show, then pick the form:
+
+| What is shown | Form |
+|---|---|
+| One posterior of a function, against the truth | `band` or `paths`, truth on top |
+| Several methods on the same function | one `ribbon` per method |
+| Parameter estimates over a sweep | `intervals` with `dodge` |
+| Distribution of a scalar | `density` |
+| Convergence, error against cost | `trace` |
+| An ordered family of curves | lines coloured by `ramp` |
+| A 2D field | `heatmap` (signed: `center=0`) |
+| Two measured quantities against each other | `points`, neutral trend line, `grid` |
+| A surface whose shape is the message | `surface` |
+| A dense signal against a measurement | `ribbon(lw=0.3)` and `signal`, zoomed panel beside it |
+| Regions in a plane | `region`, `contours`, `level_key` |
+
+1. Data. Plot only what supports the sentence; the rest goes to the text.
+2. Range. Set `xlim` and `ylim` around the data with an even margin, and explicit ticks.
+3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
+4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
+   share a unit; otherwise trimmed spines and no grid.
+5. Colour. The subject takes crimson, the second series teal, context and trend lines grey.
+6. Weight. Markers and lines must read at print size: `lf.points` and the default widths
+   are sized for that. Stress a series with weight or a dash pattern before a new colour.
+7. Order. Context first, then bands, lines, points, and the truth last.
+8. Legend. `lf.legend_above`, entries in reading order: data, then lines.
+
+Then render, look, and repeat. When the request does not say, default to: full text width
+(6.5 in), 95% intervals, flat draws over the grey interval, axis labels with units, no title.
 
 ## Design checklist
 
@@ -200,8 +256,8 @@ Craft
 15. Points sit above lines. When the points are the subject, the trend line is neutral
     (`lf.REFERENCE`).
 16. Both axes in the same unit: `aspect="equal"`. Values meant to be read off: `lf.grid(ax)`.
-17. No pie charts; use bars. No 3D unless the shape of the surface is the message; a 2D
-    field is `lf.heatmap`.
+17. No pie charts; use bars. No 3D unless the shape of the surface is the message, and then
+    `lf.surface`; any other 2D field is `lf.heatmap`.
 
 Output
 
@@ -209,7 +265,7 @@ Output
     Inkscape for hand touch-ups (legend spacing, an arrow, a note). LaTeX cannot include SVG
     directly: pass `formats=("svg", "pdf")` there. Never save a PNG as the figure.
 19. Rasterise only a layer too dense to draw as vectors, inside an otherwise vector figure
-    (`lf.heatmap` and gradient `lf.paths` do this). Check the journal proof: some journals rasterise figures.
+    (`lf.heatmap`, `lf.surface` and gradient `lf.paths` do this). Check the journal proof: some journals rasterise figures.
 20. Plan for several rounds: render, look, fix, place in the manuscript, come back the next
     day, ask a colleague.
 
@@ -230,9 +286,10 @@ thesis figure types: parameter intervals over a sweep (Fig. 3.2), densities per 
 `examples/hao_replicas.py` redraws three whole figures: a zoomed second row (thesis
 Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
 `examples/feasible_regions.py` draws feasible regions with nested limit contours, a level
-key and a fine grid.
+key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an edged scatter
+with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
 
 ## Not covered yet
 
-Corner plots, filled contour plots, 3D surfaces, and one-call recipes for whole figure types. Ask before
+Corner plots, filled contour plots, and one-call recipes for whole figure types. Ask before
 inventing a style for these.

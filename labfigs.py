@@ -4,8 +4,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.cm import ScalarMappable
 from matplotlib.collections import LineCollection
-from matplotlib.colors import LinearSegmentedColormap, is_color_like
+from matplotlib.colors import LinearSegmentedColormap, Normalize, is_color_like, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import ConnectionPatch, Polygon
@@ -20,24 +21,35 @@ MUTED = ["#BC5A55", "#66909F", "#DBA3AD", "#BF6468", "#6B7883", "#9A7078", "#879
 HEAT = LinearSegmentedColormap.from_list(
     "heat", ["#E2E6BD", "#F1DE81", "#F6C971", "#EEAB65", "#DA8459", "#B9534C", "#8E063B"])
 DIVERGING = LinearSegmentedColormap.from_list("diverging", [PREDICTIVE, "white", POSTERIOR])
+PURPLE_TEAL = ["#9671bd", "#7e7e7e", "#77b5b6"]
+# holds the lowest tenth flat so a surface's floor reads as one colour and only the peaks glow
+SUNSET = LinearSegmentedColormap.from_list("sunset", list(zip(
+    [0, 0.1, 0.28, 0.46, 0.64, 0.82, 1], ["#2d0b4e", "#2d0b4e", "#a11477", "#c1246b", "#e13661", "#fd4c55", "#ff6f4b"])))
+NIGHT = {"centre": "#12302f", "edge": "#071414", "ink": "#f2f2f0", "grid": "#2c4a48"}
 # pairs each colormap with the stretch (dark end, light end) that still reads as a line on white
 STRETCH = {
     "Blues": (1.0, 0.35), "viridis": (0.0, 0.95), "magma": (0.15, 0.85), "plasma": (0.0, 0.9), "cividis": (0.0, 0.95),
     "rocket": (0.15, 0.85), "mako": (0.15, 0.85), "flare": (1.0, 0.0), "crest": (1.0, 0.0), "YlGnBu": (1.0, 0.3),
 }
-RAMPS = {"heat": (HEAT, 1.0, 0.4)} | {name.lower(): (plt.get_cmap(name), *ends) for name, ends in STRETCH.items()}
+RAMPS = {"heat": (HEAT, 1.0, 0.4), "sunset": (SUNSET, 0.0, 1.0)} | {name.lower(): (plt.get_cmap(name), *ends) for name, ends in STRETCH.items()}
 TEXT_WIDTH = 6.5
 SPINE_OFFSET = 5
 
 
-def use(tex=None, font_size=10, series=SERIES):
+def use(tex=None, font_size=10, series=SERIES, font="serif", dark=False):
     if tex is None:
-        tex = shutil.which("latex") is not None
+        tex = font == "serif" and shutil.which("latex") is not None
     sns.set_style("ticks")
+    if dark:
+        ink = dict.fromkeys(("text.color", "axes.labelcolor", "axes.edgecolor", "xtick.color", "ytick.color"), NIGHT["ink"])
+        plt.rcParams.update(ink | {
+            "figure.facecolor": NIGHT["edge"], "savefig.facecolor": NIGHT["edge"], "axes.facecolor": "none",
+            "grid.color": NIGHT["grid"]})
     plt.rcParams.update({
         "text.usetex": tex,
         "axes.prop_cycle": plt.cycler(color=series),
-        "font.family": "serif",
+        "font.family": {"mono": "monospace"}.get(font, font),
+        "font.monospace": ["Courier New", "Courier", "Computer Modern Typewriter"],
         "font.serif": ["CMU Serif", "Latin Modern Roman", "DejaVu Serif"],
         "mathtext.fontset": "cm",
         "font.size": font_size,
@@ -61,12 +73,38 @@ def use(tex=None, font_size=10, series=SERIES):
 def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, n=None, **kw):
     figsize = (width, nrows * (width / ncols) * aspect)
     if n is None:
-        return plt.subplots(nrows, ncols, figsize=figsize, **kw)
+        fig, axes = plt.subplots(nrows, ncols, figsize=figsize, **kw)
+        backdrop(fig)
+        return fig, axes
     fig = plt.figure(figsize=figsize, **kw)
+    backdrop(fig)
     grid = fig.add_gridspec(nrows, 2 * ncols)
     indent = nrows * ncols - n
     spots = [(i // ncols, 2 * (i % ncols) + indent * (i // ncols == nrows - 1)) for i in range(n)]
     return fig, np.array([fig.add_subplot(grid[row, col:col + 2]) for row, col in spots])
+
+
+def is_dark():
+    return plt.rcParams["figure.facecolor"] == NIGHT["edge"]
+
+
+def backdrop(fig):
+    if not is_dark():
+        return
+    y, x = np.mgrid[-1:1:300j, -1:1:400j]
+    glow = LinearSegmentedColormap.from_list("", [NIGHT["centre"], NIGHT["edge"]])
+    ax = fig.add_axes([0, 0, 1, 1], zorder=-10)
+    ax.imshow(np.hypot(x, y), cmap=glow, vmin=0, vmax=2 ** 0.5, extent=(0, 1, 0, 1), aspect="auto")
+    ax.axis("off")
+
+
+def darker(color, by=0.7):
+    return tuple(by * channel for channel in to_rgb(color))
+
+
+def low_to_high(ramp):
+    cmap, dark, light = shades(ramp)
+    return cmap if (dark > light) != is_dark() else cmap.reversed()
 
 
 def shades(name):
@@ -96,6 +134,10 @@ def ribbon(ax, x, lo, mid, hi, color=None, alpha=0.25, **kw):
     line, = ax.plot(x, mid, color=color, **kw)
     ax.fill_between(x, lo, hi, color=line.get_color(), alpha=alpha, lw=0)
     return line
+
+
+def points(ax, x, y, color="C0", **kw):
+    return ax.scatter(x, y, s=22, facecolor=color, edgecolor=darker(color), lw=0.75, zorder=3, **kw)
 
 
 def data(ax, x, y, **kw):
@@ -142,14 +184,27 @@ def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level="auto",
 
 
 def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):
-    cmap, dark, light = shades(ramp)
-    cmap = cmap if dark > light else cmap.reversed()
+    cmap = low_to_high(ramp)
     if center is not None:
         reach = np.nanmax(np.abs(z - center))
         cmap, kw = DIVERGING, {"vmin": center - reach, "vmax": center + reach, **kw}
     mesh = ax.pcolormesh(x, y, z, cmap=cmap, shading="auto", rasterized=True, **kw)
     ax.figure.colorbar(mesh, ax=ax, label=label, pad=0.03).outline.set_visible(False)
     return mesh
+
+
+def surface(ax, x, y, z, ramp="heat", label=None, **kw):
+    cmap, norm = low_to_high(ramp), Normalize(np.nanmin(z), np.nanmax(z))
+    # colours each facet by its highest corner, so the peaks reach the end of the ramp
+    peak = np.maximum.reduce([z[:-1, :-1], z[1:, :-1], z[:-1, 1:], z[1:, 1:]])
+    faces = ax.plot_surface(
+        x, y, z, facecolors=cmap(norm(peak)), lw=0, shade=False, rstride=1, cstride=1, rasterized=True, **kw)
+    ax.figure.colorbar(ScalarMappable(norm, cmap), ax=ax, label=label, shrink=0.6, pad=0.12).outline.set_visible(False)
+    ax.set_facecolor("none")
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.pane.set(facecolor="none", edgecolor=plt.rcParams["grid.color"])
+        axis._axinfo["grid"].update(color=plt.rcParams["grid.color"], linewidth=0.4)
+    return faces
 
 
 def density(ax, samples, fill=False, **kw):
@@ -225,7 +280,7 @@ def legend_above(target, gap=0.18, ncols=None, **kw):
 def save(fig, path, trim=True, formats=("svg",)):
     if trim:
         for ax in fig.axes:
-            if ax.get_label() != "<colorbar>":
+            if ax.get_label() != "<colorbar>" and ax.name == "rectilinear" and ax.axison:
                 sns.despine(ax=ax, offset=SPINE_OFFSET, trim=True)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
