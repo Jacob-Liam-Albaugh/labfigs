@@ -6,11 +6,13 @@ import numpy as np
 import seaborn as sns
 from matplotlib.cm import ScalarMappable
 from matplotlib.collections import LineCollection
-from matplotlib.colors import LinearSegmentedColormap, Normalize, is_color_like, to_rgb
+from matplotlib.colors import LinearSegmentedColormap, Normalize, is_color_like, rgb_to_hsv, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import ConnectionPatch, Polygon
 from matplotlib.transforms import offset_copy
+
+from labfigs_combos import COMBOS
 
 POSTERIOR = "crimson"
 PREDICTIVE = "lightseagreen"
@@ -110,9 +112,35 @@ def low_to_high(ramp):
 def shades(name):
     if isinstance(name, str) and name in RAMPS:
         return RAMPS[name]
-    if not is_color_like(name):
-        return LinearSegmentedColormap.from_list("", name), 0.0, 1.0
-    return LinearSegmentedColormap.from_list("", ["white", name, "black"]), 0.9, 0.2
+    if is_color_like(name):
+        return LinearSegmentedColormap.from_list("", ["white", name, "black"]), 0.9, 0.2
+    ends = (0.0, 1.0) if luma(name[0]) < luma(name[-1]) else (1.0, 0.0)
+    return LinearSegmentedColormap.from_list("", name), *ends
+
+
+def luma(color):
+    return np.dot(to_rgb(color), [0.299, 0.587, 0.114])
+
+
+def hue_arc(colours):
+    hsv = rgb_to_hsv([to_rgb(colour) for colour in colours])
+    # leaves greys and near-blacks out, since their hue is noise and a neutral goes with anything
+    hues = np.sort(360 * hsv[(hsv[:, 1] > 0.1) & (hsv[:, 2] > 0.15), 0])
+    return 0.0 if len(hues) < 2 else 360 - np.diff(np.append(hues, hues[0] + 360)).max()
+
+
+def analogous(size=None, arc=60):
+    return {key: colours for key, colours in COMBOS.items() if size in (None, len(colours)) and hue_arc(colours) <= arc}
+
+
+def swatches(ax, sets):
+    for row, colours in enumerate(sets.values()):
+        n = len(colours)
+        ax.barh(row, np.full(n, 1 / n), left=np.arange(n) / n, height=0.8, color=colours, edgecolor="0.85", lw=0.3)
+    ax.set(yticks=range(len(sets)), yticklabels=[str(key).replace("_", " ") for key in sets], xticks=[])
+    ax.set(xlim=(0, 1), ylim=(len(sets) - 0.4, -0.6))
+    ax.tick_params(length=0)
+    sns.despine(ax=ax, left=True, bottom=True)
 
 
 def ramp(n, name="heat"):

@@ -121,6 +121,27 @@ The `"sunset"` ramp (deep purple to orange) holds its lowest tenth at one colour
 surface's floor stays flat and only the peaks glow. Under `use(dark=True)`, `heatmap` and
 `surface` run dark for low values and bright for high; on white they run pale to dark.
 
+### Colour combinations
+
+Prefer analogous colours to complementary ones: tell series apart by lightness and
+saturation inside one hue family, or by neighbouring hues, before reaching for an opposite
+hue. Grey is free and goes with anything.
+
+`lf.COMBOS` is the library to pull from, so no script needs a hex colour:
+
+- `lf.COMBOS[120]`: Sanzo Wada's 348 combinations by number, two to four colours each.
+- `lf.COMBOS["valentine"]`: 38 analogous ColorSchemes.jl schemes by name (`"devon"`,
+  `"amp"`, `"oslo"`, `"sienna"`, ...), up to nine stops in the source's order.
+- `lf.analogous(size=None, arc=60)`: the combinations whose hues all sit within `arc`
+  degrees (greys and near-blacks count as neutral). `examples/combos.svg` shows them.
+
+Use them through the calls that already exist: `lf.use(series=lf.COMBOS[44])` then `"C0"`,
+`"C1"`; `lf.ramp(n, lf.COMBOS["devon"])` for `n` shades, dark first; `ramp=lf.COMBOS["amp"]`
+in `heatmap` and `surface`, `gradient=lf.COMBOS["amp"]` in `paths`. When the choice is open,
+draw the candidates with `lf.swatches(ax, sets)` (a dict of label to colours) and look
+before picking. `lf.hue_arc(colours)` measures a set: under 60 is analogous, the house
+crimson and teal are about 170.
+
 ## Conventions
 
 - Axis labels are LaTeX math, normalised quantities written as `$x_1/\bar{x}_1$`.
@@ -196,7 +217,9 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
    share a unit; otherwise trimmed spines and no grid.
-5. Colour. The subject takes crimson, the second series teal, context and trend lines grey.
+5. Colour. Start analogous: one hue family with series split by lightness and saturation
+   (`lf.ramp(n, colour)` or a set from `lf.analogous()`), grey for context and trend lines.
+   Posterior against predictive keeps the house crimson then teal.
 6. Weight. Markers and lines must read at print size: `lf.points` and the default widths
    are sized for that. Stress a series with weight or a dash pattern before a new colour.
 7. Order. Context first, then bands, lines, points, and the truth last.
@@ -243,7 +266,8 @@ Colour
 11. No bright complementary pairs (red and green, cyan and red, yellow and purple), no
     yellow on white. Red reads as wrong and green as right, so use them only when that is
     meant. The house crimson and teal are close to complementary: keep them as band against
-    thin lines, never as two solid fills side by side.
+    thin lines, never as two solid fills side by side. Everywhere else prefer an analogous
+    set (`lf.analogous()`), varying lightness and saturation before hue.
 12. Ordered data takes a ramp, never a rainbow. Every `lf.ramp` runs dark to light, so the
     order survives greyscale printing. A gradient should mean something (crimson is the
     tight or worse end).
@@ -288,6 +312,7 @@ Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
 `examples/feasible_regions.py` draws feasible regions with nested limit contours, a level
 key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an edged scatter
 with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
+`examples/combos.py` draws every analogous combination in `lf.COMBOS` as labelled swatches.
 
 ## Not covered yet
 

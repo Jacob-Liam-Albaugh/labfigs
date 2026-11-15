@@ -80,6 +80,10 @@ python examples/feasible_regions.py
 python examples/churkin.py
 ```
 
+```bash
+python examples/combos.py
+```
+
 Each writes its figure next to the script.
 
 The thesis Fig. 3.11 layout (`duffing_311.py`):
@@ -138,6 +142,10 @@ A 3D surface on the dark page, in the sunset ramp:
 
 ![3D surface](examples/surface_3d.svg)
 
+The analogous colour combinations in `lf.COMBOS`, to pull from by number or name (`combos.py`):
+
+![Colour combinations](examples/combos.svg)
+
 ## Design checklist
 
 Before a figure goes into a paper:
@@ -146,6 +154,7 @@ Before a figure goes into a paper:
 - Set `lf.subplots(width=)` to the printed width and include the figure unscaled, so the text prints at body-text size. No text below about 8 pt.
 - Check it in the compiled manuscript at 100%: font size against the caption, line weights, marker sizes, legend.
 - Design in black, grey and line styles first, then add one or two colours. Keep one colour per data subset across every figure.
+- Prefer analogous colours: vary lightness and saturation inside one hue family before adding an opposite hue (`lf.analogous()`).
 - Fade the mass of lines to grey and colour only the few that matter.
 - Use a ramp for ordered data, never a rainbow. Red reads as wrong and green as right.
 - Put the legend at the top, and write a caption that says what to see.
@@ -159,6 +168,8 @@ The full checklist is in [skill/SKILL.md](skill/SKILL.md).
 
 - Kairui Hao's thesis and filter paper figures: the source of the house style (colours, trimmed spines, legend above).
 - Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`), the feasible-region example layout, the purple-teal set, the sunset ramp, the dark page, edged markers (`lf.points`) and the 3D surface (`lf.surface`). His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
+- Sanzo Wada, *A Dictionary of Color Combinations*, browsed at [colors.elwyn.co](https://colors.elwyn.co) and taken from Matt DesLauriers' [dataset](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT): the 348 numbered combinations in `lf.COMBOS`.
+- [ColorSchemes.jl](https://github.com/JuliaGraphics/ColorSchemes.jl) (MIT), as listed in the [Plots.jl docs](https://docs.juliaplots.org/stable/generated/colorschemes/): the analogous named schemes in `lf.COMBOS`.
 
 ## Claude Code skill
 
