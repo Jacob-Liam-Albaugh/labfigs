@@ -52,13 +52,13 @@ The full list of helpers, options and conventions is in [skill/SKILL.md](skill/S
 
 ## Examples
 
-Each script in `examples/` writes its SVG figures next to itself:
+Each script in `examples/` writes its SVG figures next to itself. Figures credited to Kairui Hao or Andrey Churkin are not copies of theirs: each is remade with labfigs on synthetic data, and the credit links to the original.
 
 ```bash
 for script in examples/*.py; do python "$script"; done
 ```
 
-The house layout, after thesis Fig. 3.11: a posterior band, predictive draws, the truth and a forecast split (`duffing_311.py`):
+The house layout: a posterior band, predictive draws, the truth and a forecast split (`duffing_311.py`). Remade with labfigs after Fig. 3.11 of [Hao's thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570):
 
 ![Posterior and posterior predictive](examples/duffing_311.svg)
 
@@ -66,15 +66,15 @@ A 2D field in every ramp (`field.py`):
 
 ![Fields](examples/field.svg)
 
-Regions with nested contours, a level key and a fine grid (`feasible_regions.py`):
+Regions with nested contours, a level key and a fine grid (`feasible_regions.py`). Remade with labfigs after Churkin's [main example](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/01_main_simple_example):
 
 ![Feasible regions](examples/feasible_regions.svg)
 
-A 3D surface on the dark page (`churkin.py`):
+A 3D surface on the dark page (`churkin.py`). Remade with labfigs after Churkin's [3D price surface](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/02_3d_price_surface):
 
 ![3D surface](examples/surface_3d.svg)
 
-The rest are in [examples/](examples): [gradient draws](examples/gradient_draws.svg), [ramps as line sweeps](examples/palettes.svg), [parameter intervals](examples/intervals.svg), [densities](examples/densities.svg), [shaded panels](examples/shaded_panels.svg), [convergence traces](examples/convergence.svg), three of Hao's figures redrawn ([6.3](examples/fig_6_3.svg), [14](examples/fig_14.svg), [16](examples/fig_16.svg)), an [edged scatter](examples/edged_scatter.svg) and the [muted colour combinations](examples/combos.svg) in `lf.COMBOS`.
+The rest are in [examples/](examples): [gradient draws](examples/gradient_draws.svg), [ramps as line sweeps](examples/palettes.svg), [parameter intervals](examples/intervals.svg), [densities](examples/densities.svg), [shaded panels](examples/shaded_panels.svg), [convergence traces](examples/convergence.svg), three of Hao's figures remade with labfigs ([6.3](examples/fig_6_3.svg) of the [thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [14](examples/fig_14.svg) and [16](examples/fig_16.svg) of the [filter paper](https://arxiv.org/abs/2407.16502)), an [edged scatter](examples/edged_scatter.svg) after Churkin's [main example](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/01_main_simple_example) and the [muted colour combinations](examples/combos.svg) in `lf.COMBOS`.
 
 ## Design checklist
 
@@ -96,7 +96,7 @@ The full checklist is in [skill/SKILL.md](skill/SKILL.md).
 
 ## References
 
-- Kairui Hao, *Information Field Theory Approach to Uncertainty Quantification for Differential Equations: Theory, Algorithms and Applications*, PhD thesis, Purdue University ([Purdue Hammer](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [ProQuest](https://www.proquest.com/docview/3235007366)), and his filter paper: the source of the house style (colours, trimmed spines, legend above).
+- Kairui Hao, *Information Field Theory Approach to Uncertainty Quantification for Differential Equations: Theory, Algorithms and Applications*, PhD thesis, Purdue University ([Purdue Hammer](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [ProQuest](https://www.proquest.com/docview/3235007366)), and his [filter paper](https://arxiv.org/abs/2407.16502): the source of the house style (colours, trimmed spines, legend above).
 - Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`), the feasible-region example layout, the purple-teal set, the sunset ramp, the dark page, edged markers (`lf.points`) and the 3D surface (`lf.surface`). His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
 - Sanzo Wada, *A Dictionary of Color Combinations*, browsed at [colors.elwyn.co](https://colors.elwyn.co) and taken from Matt DesLauriers' [dataset](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT): the 348 numbered combinations in `lf.COMBOS`.
 - [ColorSchemes.jl](https://github.com/JuliaGraphics/ColorSchemes.jl) (MIT), as listed in the [Plots.jl docs](https://docs.juliaplots.org/stable/generated/colorschemes/): the named single-family schemes in `lf.COMBOS`.
