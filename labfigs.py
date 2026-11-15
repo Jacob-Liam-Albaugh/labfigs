@@ -133,7 +133,9 @@ def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level="auto",
     depth = np.minimum((sigmas[:, :-1] + sigmas[:, 1:]).ravel() // 2, 2) / 3 + 1 / 3
     central_last = np.argsort(-depth)
     shade = dark + (light - dark) * depth[central_last]
-    lines = LineCollection(segments[central_last], array=shade, cmap=cmap, clim=(0, 1), alpha=alpha or 0.4, **kw)
+    # keeps the SVG small: one path per segment would run to tens of megabytes
+    lines = LineCollection(
+        segments[central_last], array=shade, cmap=cmap, clim=(0, 1), alpha=alpha or 0.4, rasterized=True, **kw)
     ax.add_collection(lines)
     ax.autoscale_view()
     return lines
@@ -220,7 +222,7 @@ def legend_above(target, gap=0.18, ncols=None, **kw):
     )
 
 
-def save(fig, path, trim=True, formats=("pdf", "png")):
+def save(fig, path, trim=True, formats=("svg",)):
     if trim:
         for ax in fig.axes:
             if ax.get_label() != "<colorbar>":

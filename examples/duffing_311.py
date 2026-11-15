@@ -53,5 +53,5 @@ for i, ax in enumerate(axes):
 lf.legend_above(axes[0])
 
 out = lf.save(fig, Path(__file__).parent / "duffing_311")
-assert out.with_suffix(".pdf").stat().st_size > 0 and out.with_suffix(".png").stat().st_size > 0
-print("wrote", out.with_suffix(".png"))
+assert out.with_suffix(".svg").stat().st_size > 0
+print("wrote", out.with_suffix(".svg"))

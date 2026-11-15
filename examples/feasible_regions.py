@@ -34,5 +34,5 @@ for ax, letter, (color, outer, inner, centre, reach, point) in zip(axes, "abc", 
 axes[0].set_ylabel("$Q$ (kVAr)")
 lf.save(fig, out / "feasible_regions", trim=False)
 
-assert (out / "feasible_regions.png").stat().st_size > 0
-print("wrote", out / "feasible_regions.png")
+assert (out / "feasible_regions.svg").stat().st_size > 0
+print("wrote", out / "feasible_regions.svg")

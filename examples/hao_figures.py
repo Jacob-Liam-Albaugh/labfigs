@@ -65,5 +65,5 @@ lf.legend_above(fig)
 lf.save(fig, out / "convergence")
 
 names = ("intervals", "densities", "shaded_panels", "convergence")
-assert all((out / f"{name}.png").stat().st_size > 0 for name in names)
-print("wrote", *(out / f"{name}.png" for name in names))
+assert all((out / f"{name}.svg").stat().st_size > 0 for name in names)
+print("wrote", *(out / f"{name}.svg" for name in names))

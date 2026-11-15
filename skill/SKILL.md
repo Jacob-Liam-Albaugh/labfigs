@@ -20,7 +20,9 @@ plot elements that recur. Source lives at
    then commit and push the library. Do not write the element inline in the script.
 5. A plotting script should be data loading plus a handful of `lf.` calls. If the plotting
    part passes about 20 lines, something belongs in the library.
-6. Open the saved PNG and look at it before reporting the figure as done.
+6. Figures are vector only: `lf.save` writes SVG. Look at every figure before reporting it
+   as done: `rsvg-convert -w 1600 name.svg -o <scratch>/name.png`, then open that preview.
+   The preview is for checking, never the deliverable.
 7. Run the design checklist below on every figure that goes into a paper or report.
 
 ## API
@@ -57,7 +59,7 @@ lf.contours(ax, x, y, z, levels, colors, within=free)  # thin contour lines, cli
 lf.level_key(ax, labels, colors, "Limit:")  # row of boxed level values above the panel, one colour each
 lf.ramp(n, ("crimson", "C2"))             # n colours blending from one colour to another
 lf.grid(ax)                               # fine major and minor grid for reading values off; save with trim=False
-lf.save(fig, "out/name")                  # trims spines, writes name.pdf and name.png
+lf.save(fig, "out/name")                  # trims spines, writes name.svg
 ```
 
 `lf.quantiles(samples)` returns `(lo, median, hi)`, ready to unpack into `ribbon` or
@@ -67,7 +69,7 @@ lf.save(fig, "out/name")                  # trims spines, writes name.pdf and na
 Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level="auto", gradient=False | True | colour | ramp name)`,
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
-spines (log axes), `use(tex=False)` for fast drafts.
+spines (log axes), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
 
 ## Colours
 
@@ -149,29 +151,67 @@ methods apart.
 
 ## Design checklist
 
-Adapted from Andrey Churkin's BeautifulFigures (https://github.com/AndreyChurkin/BeautifulFigures).
+Adapted from Andrey Churkin's BeautifulFigures (https://github.com/AndreyChurkin/BeautifulFigures)
+and his two tutorials: principles (https://youtu.be/i-HAjex6VtM) and the full process
+(https://youtu.be/KQ6Zg9B5Mxs).
 
-1. Message first. Say in one sentence what the figure shows, then remove every element
-   that does not serve that sentence.
-2. Size for the page. Set `lf.subplots(width=)` to the printed width (6.5 in for full text
-   width, 3.5 in for one column of a two-column paper) and include the PDF unscaled, so the
-   10 pt text prints at the size of the body text.
-3. Check it in the real layout. A figure that looks right on screen can fail on the page:
-   compile the manuscript and check font size, line weights, marker sizes and the legend.
-4. Few colours, each with a job. One data subset keeps one colour in every figure of a
-   manuscript, indicator colours keep one meaning, and a new colour appears only when it
-   carries new information.
-5. Ordered data takes a ramp, never a rainbow. Every `lf.ramp` runs dark to light, so the
-   order survives greyscale printing.
-6. Legend compact, above the axes, never over the data.
-7. Points sit above lines. When the points are the subject, the trend line is neutral
-   (`lf.REFERENCE`).
-8. Both axes in the same unit: `aspect="equal"`. Values meant to be read off: `lf.grid(ax)`.
-9. Vector output. The PDF goes into the paper; the PNG is for slides and READMEs. Add
-   `formats=("pdf", "png", "svg")` when the figure will be edited by hand.
-10. No pie charts. No 3D unless the shape of the surface is the message; a 2D field is
-    `lf.heatmap`.
-11. Plan for several rounds: render, look, fix, render again.
+Message
+
+1. Story first. Say in one sentence what the figure shows, then plot only the data that
+   supports that sentence. Never plot data because it exists.
+2. For every element ask: is it needed, can it be simpler, can it go? Detail moves to the
+   text or an appendix.
+3. Many lines: draw the mass in `lf.REFERENCE` or at low alpha and colour only the few that
+   matter. No spaghetti plots. No second y axis piled with bars and lines.
+4. Readers scan from the top-left in a Z, so the legend or key sits at the top and panels
+   read left to right.
+5. The caption says what to see: which panel is the good case, what each colour and marker
+   means. Every axis and every colourbar has a label with its unit.
+
+Page
+
+6. Size for the page. Set `lf.subplots(width=)` to the printed width (6.5 in for full text
+   width, 3.5 in for one column of a two-column paper) and include the figure unscaled, so
+   the 10 pt text prints at body-text size. No text below the template's smallest font
+   (about 8 pt).
+7. Check it in the real layout: compile the manuscript, view the page at 100% and compare
+   figure text with caption text, then zoom out. Readable without zooming in is the bar.
+8. One style per paper: every figure from labfigs, panels of the same size, few line and
+   marker types.
+
+Colour
+
+9. Design in black, grey and line styles first. Then add one colour, two at most.
+10. One data subset keeps one colour in every figure of a manuscript. A new colour appears
+    only when it carries new information.
+11. No bright complementary pairs (red and green, cyan and red, yellow and purple), no
+    yellow on white. Red reads as wrong and green as right, so use them only when that is
+    meant. The house crimson and teal are close to complementary: keep them as band against
+    thin lines, never as two solid fills side by side.
+12. Ordered data takes a ramp, never a rainbow. Every `lf.ramp` runs dark to light, so the
+    order survives greyscale printing. A gradient should mean something (crimson is the
+    tight or worse end).
+
+Craft
+
+13. Limits frame the data that matters: set `xlim` and `ylim` around the points with an even
+    margin and let trend lines run off the edge.
+14. Legend compact, above the axes, never over the data; data entries first, then lines.
+15. Points sit above lines. When the points are the subject, the trend line is neutral
+    (`lf.REFERENCE`).
+16. Both axes in the same unit: `aspect="equal"`. Values meant to be read off: `lf.grid(ax)`.
+17. No pie charts; use bars. No 3D unless the shape of the surface is the message; a 2D
+    field is `lf.heatmap`.
+
+Output
+
+18. Vector only. `lf.save` writes SVG, which goes straight into Word, slides, web pages and
+    Inkscape for hand touch-ups (legend spacing, an arrow, a note). LaTeX cannot include SVG
+    directly: pass `formats=("svg", "pdf")` there. Never save a PNG as the figure.
+19. Rasterise only a layer too dense to draw as vectors, inside an otherwise vector figure
+    (`lf.heatmap` and gradient `lf.paths` do this). Check the journal proof: some journals rasterise figures.
+20. Plan for several rounds: render, look, fix, place in the manuscript, come back the next
+    day, ask a colleague.
 
 ## Running
 

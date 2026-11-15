@@ -109,5 +109,5 @@ lf.legend_above(fig)
 lf.save(fig, out / "fig_16")
 
 names = ("fig_6_3", "fig_14", "fig_16")
-assert all((out / f"{name}.png").stat().st_size > 0 for name in names)
-print("wrote", *(out / f"{name}.png" for name in names))
+assert all((out / f"{name}.svg").stat().st_size > 0 for name in names)
+print("wrote", *(out / f"{name}.svg" for name in names))

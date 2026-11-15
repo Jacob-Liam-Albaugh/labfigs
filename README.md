@@ -41,7 +41,7 @@ lf.legend_above(ax)
 lf.save(fig, "out/first")
 ```
 
-This writes `out/first.pdf` and `out/first.png`. The rules:
+This writes `out/first.svg`. Figures are vector only; pass `formats=("svg", "pdf")` to `lf.save` when LaTeX needs a PDF. The rules:
 
 - Call `lf.use()` once, before any figure. Do not set fonts, sizes or `rcParams` yourself.
 - Make figures with `lf.subplots` and finish them with `lf.save`.
@@ -80,62 +80,64 @@ Each writes its figure next to the script.
 
 The thesis Fig. 3.11 layout (`duffing_311.py`):
 
-![Posterior and posterior predictive](examples/duffing_311.png)
+![Posterior and posterior predictive](examples/duffing_311.svg)
 
 Sample draws, flat and shaded by standard deviations from the mean in every ramp (`field.py`):
 
-![Gradient draws](examples/gradient_draws.png)
+![Gradient draws](examples/gradient_draws.svg)
 
 A 2D field in every ramp (`field.py`):
 
-![Fields](examples/field.png)
+![Fields](examples/field.svg)
 
 Every ramp as a line sweep (`palettes.py`):
 
-![Ramps](examples/palettes.png)
+![Ramps](examples/palettes.svg)
 
 The other figure types of Hao's thesis, on synthetic data (`hao_figures.py`). Parameter intervals over a sweep, as in Fig. 3.2:
 
-![Intervals](examples/intervals.png)
+![Intervals](examples/intervals.svg)
 
 Densities per method and filled, as in Fig. 6.2 and 4.6:
 
-![Densities](examples/densities.png)
+![Densities](examples/densities.svg)
 
 A grid with shaded panels and two-colour titles, as in Fig. 4.9:
 
-![Shaded panels](examples/shaded_panels.png)
+![Shaded panels](examples/shaded_panels.svg)
 
 Convergence traces, as in Fig. 6.7:
 
-![Convergence](examples/convergence.png)
+![Convergence](examples/convergence.svg)
 
 Three whole figures redrawn on synthetic data (`hao_replicas.py`). Thesis Fig. 6.3, with a zoomed second row:
 
-![Fig. 6.3](examples/fig_6_3.png)
+![Fig. 6.3](examples/fig_6_3.svg)
 
 Filter paper Fig. 14, whole record beside a zoom:
 
-![Fig. 14](examples/fig_14.png)
+![Fig. 14](examples/fig_14.svg)
 
 Filter paper Fig. 16:
 
-![Fig. 16](examples/fig_16.png)
+![Fig. 16](examples/fig_16.svg)
 
 Feasible regions with nested limit contours, a level key and a fine grid (`feasible_regions.py`):
 
-![Feasible regions](examples/feasible_regions.png)
+![Feasible regions](examples/feasible_regions.svg)
 
 ## Design checklist
 
 Before a figure goes into a paper:
 
-- Say in one sentence what it shows, and remove what does not serve that sentence.
-- Set `lf.subplots(width=)` to the printed width and include the PDF unscaled, so the text prints at body-text size.
-- Check it in the compiled manuscript: font size, line weights, marker sizes, legend.
-- Use few colours, and keep one colour per data subset across every figure.
-- Use a ramp for ordered data, never a rainbow.
-- Use the PDF in the paper; the PNG is for slides.
+- Say in one sentence what it shows, and plot only the data that supports that sentence.
+- Set `lf.subplots(width=)` to the printed width and include the figure unscaled, so the text prints at body-text size. No text below about 8 pt.
+- Check it in the compiled manuscript at 100%: font size against the caption, line weights, marker sizes, legend.
+- Design in black, grey and line styles first, then add one or two colours. Keep one colour per data subset across every figure.
+- Fade the mass of lines to grey and colour only the few that matter.
+- Use a ramp for ordered data, never a rainbow. Red reads as wrong and green as right.
+- Put the legend at the top, and write a caption that says what to see.
+- Vector only: `lf.save` writes SVG. Add `formats=("svg", "pdf")` for LaTeX.
 - Avoid pie charts and 3D.
 - Expect several rounds of render, look, fix.
 
@@ -144,7 +146,7 @@ The full checklist is in [skill/SKILL.md](skill/SKILL.md).
 ## References
 
 - Kairui Hao's thesis and filter paper figures: the source of the house style (colours, trimmed spines, legend above).
-- Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`) and the feasible-region example layout. His [video walkthrough](https://youtu.be/i-HAjex6VtM) covers the same principles.
+- Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`) and the feasible-region example layout. His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
 
 ## Claude Code skill
 

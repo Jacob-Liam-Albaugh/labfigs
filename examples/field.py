@@ -51,5 +51,5 @@ fig.supylabel("$y$")
 lf.save(fig, out / "field")
 
 names = ("gradient_draws", "field")
-assert len({ax.collections[0].cmap.name for ax in axes.flat}) == axes.size and all((out / f"{name}.png").stat().st_size > 0 for name in names)
-print("wrote", *(out / f"{name}.png" for name in names))
+assert len({ax.collections[0].cmap.name for ax in axes.flat}) == axes.size and all((out / f"{name}.svg").stat().st_size > 0 for name in names)
+print("wrote", *(out / f"{name}.svg" for name in names))

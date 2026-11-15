@@ -17,5 +17,5 @@ fig.supxlabel("$x$")
 fig.supylabel(r"$e^{-kx}$")
 
 out = lf.save(fig, Path(__file__).parent / "palettes")
-assert len(palettes) == axes.size and all(len(c) >= 6 for c in palettes.values()) and out.with_suffix(".png").stat().st_size > 0
-print("wrote", out.with_suffix(".png"))
+assert len(palettes) == axes.size and all(len(c) >= 6 for c in palettes.values()) and out.with_suffix(".svg").stat().st_size > 0
+print("wrote", out.with_suffix(".svg"))
