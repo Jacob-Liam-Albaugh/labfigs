@@ -1,6 +1,6 @@
 # labfigs
 
-One plotting library for the lab's figures, with a house style modelled on Kairui Hao's thesis figures and a design checklist adapted from Andrey Churkin's [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/).
+One plotting library for the lab's figures, with a house style modelled on the figures of [Kairui Hao's thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570) and a design checklist adapted from Andrey Churkin's [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/).
 It is matplotlib and seaborn underneath: one style call, plus helpers for the elements that keep coming back (posterior bands, sample draws, method ribbons, intervals, heatmaps, colour ramps).
 A Claude Code skill in `skill/` teaches an agent to use it, so figures look the same in every project.
 
@@ -52,99 +52,29 @@ The full list of helpers, options and conventions is in [skill/SKILL.md](skill/S
 
 ## Examples
 
-```bash
-python examples/duffing_311.py
-```
+Each script in `examples/` writes its SVG figures next to itself:
 
 ```bash
-python examples/field.py
+for script in examples/*.py; do python "$script"; done
 ```
 
-```bash
-python examples/palettes.py
-```
-
-```bash
-python examples/hao_figures.py
-```
-
-```bash
-python examples/hao_replicas.py
-```
-
-```bash
-python examples/feasible_regions.py
-```
-
-```bash
-python examples/churkin.py
-```
-
-```bash
-python examples/combos.py
-```
-
-Each writes its figure next to the script.
-
-The thesis Fig. 3.11 layout (`duffing_311.py`):
+The house layout, after thesis Fig. 3.11: a posterior band, predictive draws, the truth and a forecast split (`duffing_311.py`):
 
 ![Posterior and posterior predictive](examples/duffing_311.svg)
-
-Sample draws, flat and shaded by standard deviations from the mean in every ramp (`field.py`):
-
-![Gradient draws](examples/gradient_draws.svg)
 
 A 2D field in every ramp (`field.py`):
 
 ![Fields](examples/field.svg)
 
-Every ramp as a line sweep (`palettes.py`):
-
-![Ramps](examples/palettes.svg)
-
-The other figure types of Hao's thesis, on synthetic data (`hao_figures.py`). Parameter intervals over a sweep, as in Fig. 3.2:
-
-![Intervals](examples/intervals.svg)
-
-Densities per method and filled, as in Fig. 6.2 and 4.6:
-
-![Densities](examples/densities.svg)
-
-A grid with shaded panels and two-colour titles, as in Fig. 4.9:
-
-![Shaded panels](examples/shaded_panels.svg)
-
-Convergence traces, as in Fig. 6.7:
-
-![Convergence](examples/convergence.svg)
-
-Three whole figures redrawn on synthetic data (`hao_replicas.py`). Thesis Fig. 6.3, with a zoomed second row:
-
-![Fig. 6.3](examples/fig_6_3.svg)
-
-Filter paper Fig. 14, whole record beside a zoom:
-
-![Fig. 14](examples/fig_14.svg)
-
-Filter paper Fig. 16:
-
-![Fig. 16](examples/fig_16.svg)
-
-Feasible regions with nested limit contours, a level key and a fine grid (`feasible_regions.py`):
+Regions with nested contours, a level key and a fine grid (`feasible_regions.py`):
 
 ![Feasible regions](examples/feasible_regions.svg)
 
-Churkin's two examples redrawn (`churkin.py`). Markers with darker edges, neutral trend lines and the mono font:
-
-![Edged scatter](examples/edged_scatter.svg)
-
-A 3D surface on the dark page, in the sunset ramp:
+A 3D surface on the dark page (`churkin.py`):
 
 ![3D surface](examples/surface_3d.svg)
 
-The analogous colour combinations in `lf.COMBOS`, to pull from by number or name (`combos.py`):
-
-![Colour combinations](examples/combos.svg)
+The rest are in [examples/](examples): [gradient draws](examples/gradient_draws.svg), [ramps as line sweeps](examples/palettes.svg), [parameter intervals](examples/intervals.svg), [densities](examples/densities.svg), [shaded panels](examples/shaded_panels.svg), [convergence traces](examples/convergence.svg), three of Hao's figures redrawn ([6.3](examples/fig_6_3.svg), [14](examples/fig_14.svg), [16](examples/fig_16.svg)), an [edged scatter](examples/edged_scatter.svg) and the [muted colour combinations](examples/combos.svg) in `lf.COMBOS`.
 
 ## Design checklist
 
@@ -154,7 +84,7 @@ Before a figure goes into a paper:
 - Set `lf.subplots(width=)` to the printed width and include the figure unscaled, so the text prints at body-text size. No text below about 8 pt.
 - Check it in the compiled manuscript at 100%: font size against the caption, line weights, marker sizes, legend.
 - Design in black, grey and line styles first, then add one or two colours. Keep one colour per data subset across every figure.
-- Prefer analogous colours: vary lightness and saturation inside one hue family before adding an opposite hue (`lf.analogous()`).
+- No neon. Complementary colours are fine at moderate saturation (`lf.combos(2, vivid=0.5)`); colours that must be told apart differ in hue, not only in lightness.
 - Fade the mass of lines to grey and colour only the few that matter.
 - Use a ramp for ordered data, never a rainbow. Red reads as wrong and green as right.
 - Put the legend at the top, and write a caption that says what to see.
@@ -166,10 +96,10 @@ The full checklist is in [skill/SKILL.md](skill/SKILL.md).
 
 ## References
 
-- Kairui Hao's thesis and filter paper figures: the source of the house style (colours, trimmed spines, legend above).
+- Kairui Hao, *Information Field Theory Approach to Uncertainty Quantification for Differential Equations: Theory, Algorithms and Applications*, PhD thesis, Purdue University ([Purdue Hammer](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [ProQuest](https://www.proquest.com/docview/3235007366)), and his filter paper: the source of the house style (colours, trimmed spines, legend above).
 - Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`), the feasible-region example layout, the purple-teal set, the sunset ramp, the dark page, edged markers (`lf.points`) and the 3D surface (`lf.surface`). His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
 - Sanzo Wada, *A Dictionary of Color Combinations*, browsed at [colors.elwyn.co](https://colors.elwyn.co) and taken from Matt DesLauriers' [dataset](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT): the 348 numbered combinations in `lf.COMBOS`.
-- [ColorSchemes.jl](https://github.com/JuliaGraphics/ColorSchemes.jl) (MIT), as listed in the [Plots.jl docs](https://docs.juliaplots.org/stable/generated/colorschemes/): the analogous named schemes in `lf.COMBOS`.
+- [ColorSchemes.jl](https://github.com/JuliaGraphics/ColorSchemes.jl) (MIT), as listed in the [Plots.jl docs](https://docs.juliaplots.org/stable/generated/colorschemes/): the named single-family schemes in `lf.COMBOS`.
 
 ## Claude Code skill
 

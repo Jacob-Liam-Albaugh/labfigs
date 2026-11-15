@@ -129,8 +129,14 @@ def hue_arc(colours):
     return 0.0 if len(hues) < 2 else 360 - np.diff(np.append(hues, hues[0] + 360)).max()
 
 
-def analogous(size=None, arc=60):
-    return {key: colours for key, colours in COMBOS.items() if size in (None, len(colours)) and hue_arc(colours) <= arc}
+def vividness(colours):
+    return np.ptp([to_rgb(colour) for colour in colours], axis=1).max()
+
+
+def combos(size=None, vivid=1.0, arc=(0, 360)):
+    return {
+        key: colours for key, colours in COMBOS.items()
+        if size in (None, len(colours)) and vividness(colours) <= vivid and arc[0] <= hue_arc(colours) <= arc[1]}
 
 
 def swatches(ax, sets):
@@ -185,10 +191,8 @@ def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
     return ax.errorbar(np.asarray(x) + shift, mid, [mid - lo, hi - mid], fmt=fmt, ms=3, **kw)
 
 
-def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level="auto", gradient=False, **kw):
+def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level=None, gradient=False, **kw):
     samples = np.asarray(samples)
-    if level == "auto":
-        level = None if gradient else 0.95
     if level:
         percent = r"\%" if plt.rcParams["text.usetex"] else "%"
         band(ax, x, samples, level, color=REFERENCE, alpha=0.3, lw=0, label=f"{100 * level:g}{percent} interval")

@@ -57,7 +57,7 @@ for j, (ax, truth) in enumerate(zip(axes, (0.3, -1.0, 1.0))):
     width = 0.05 + 0.6 * np.exp(-steps / 0.1)
     lf.ribbon(ax, steps, settle - width, settle, settle + width, label="Relaxed SVI")
     chains = settle + 0.03 * rng.normal(size=(5, 300)).cumsum(1) * np.exp(-steps)
-    lf.paths(ax, steps, chains, color="C1", alpha=0.7, level=None, label="Relaxed SGLD")
+    lf.paths(ax, steps, chains, color="C1", alpha=0.7, label="Relaxed SGLD")
     ax.axhline(truth, color=lf.TRUE, label="True")
     ax.set(xticks=[0, 1, 2], yticks=[-1, 0, 1], ylim=(-1.3, 1.3), ylabel=rf"$k_{j + 1}/\bar{{k}}_{j + 1}$")
 fig.supxlabel(r"Iterations ($\times 10^6$)")

@@ -33,8 +33,8 @@ import labfigs as lf
 lf.use()                                  # style; LaTeX text when latex is installed
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = panel height / width
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
-lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 shown) over a grey 95% band
-lf.paths(ax, x, samples, gradient=True)   # no grey band unless level=0.95; heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
+lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 shown); level=0.95 adds a grey band under them
+lf.paths(ax, x, samples, gradient=True)   # heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
 lf.paths(ax, x, samples, gradient="C1")   # same bands in shades of one colour (any colour), or a ramp name ("viridis")
 ax.plot(x, y, color=lf.TRUE, label="True")
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
@@ -69,7 +69,7 @@ lf.save(fig, "out/name")                  # trims spines, writes name.svg
 `intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position;
 `intervals(connect=True)` joins the dots.
 
-Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level="auto", gradient=False | True | colour | ramp name)`,
+Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=None, gradient=False | True | colour | ramp name)`,
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
 spines (log axes), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
@@ -110,8 +110,9 @@ are compared against each other share `vmin` and `vmax`. Set `aspect="equal"` on
 when x and y are the same physical quantity. Overlay sensors with `lf.data`.
 
 `lf.MUTED` is a softer seven-colour set (brick red, steel teal, dusty pink, rose, slate,
-mauve, blue-grey). Its neighbours are close in hue, so use it for light/dark pairs of one
-method or a quiet figure, via `lf.use(series=lf.MUTED)`; keep the default cycle for telling
+mauve, blue-grey), via `lf.use(series=lf.MUTED)`. Its first two are the house pair with the
+saturation turned down: opposite hues that still sit quietly side by side. The other five
+are close in hue, so use them for light/dark variants of one method, not for telling
 methods apart.
 
 `lf.PURPLE_TEAL` is Churkin's three-colour set: purple, grey, teal. `"C0"` and `"C2"` are two
@@ -123,24 +124,32 @@ surface's floor stays flat and only the peaks glow. Under `use(dark=True)`, `hea
 
 ### Colour combinations
 
-Prefer analogous colours to complementary ones: tell series apart by lightness and
-saturation inside one hue family, or by neighbouring hues, before reaching for an opposite
-hue. Grey is free and goes with anything.
+Saturation is the thing to control, not hue. Neon colours (fully saturated and bright:
+pure yellow, lime, cyan, magenta) are hard on the eyes; a complementary pair is fine once
+both colours are muted. Two things that must be told apart take different hues: shades of
+one hue (a deep and a pale rose) blur together as band against lines, so keep single-hue
+steps for ordered sweeps. Grey is free and goes with anything.
 
 `lf.COMBOS` is the library to pull from, so no script needs a hex colour:
 
 - `lf.COMBOS[120]`: Sanzo Wada's 348 combinations by number, two to four colours each.
-- `lf.COMBOS["valentine"]`: 38 analogous ColorSchemes.jl schemes by name (`"devon"`,
-  `"amp"`, `"oslo"`, `"sienna"`, ...), up to nine stops in the source's order.
-- `lf.analogous(size=None, arc=60)`: the combinations whose hues all sit within `arc`
-  degrees (greys and near-blacks count as neutral). `examples/combos.svg` shows them.
+- `lf.COMBOS["devon"]`: 38 single-family ColorSchemes.jl schemes by name (`"amp"`,
+  `"oslo"`, `"sienna"`, ...), up to nine stops in the source's order. These are ramps for
+  ordered data, not series colours.
+- `lf.combos(size=None, vivid=1.0, arc=(0, 360))`: the combinations of `size` colours whose
+  most vivid colour is at most `vivid` and whose hues span between `arc[0]` and `arc[1]`
+  degrees (greys and near-blacks count as neutral). `lf.combos(2, vivid=0.5, arc=(120, 360))`
+  is the muted complementary pairs; `examples/combos.svg` shows everything under 0.5.
 
 Use them through the calls that already exist: `lf.use(series=lf.COMBOS[44])` then `"C0"`,
 `"C1"`; `lf.ramp(n, lf.COMBOS["devon"])` for `n` shades, dark first; `ramp=lf.COMBOS["amp"]`
 in `heatmap` and `surface`, `gradient=lf.COMBOS["amp"]` in `paths`. When the choice is open,
 draw the candidates with `lf.swatches(ax, sets)` (a dict of label to colours) and look
-before picking. `lf.hue_arc(colours)` measures a set: under 60 is analogous, the house
-crimson and teal are about 170.
+before picking. Two measures back the eye: `lf.vividness(colours)` is the strongest colour
+of a set, from 0 (grey) to 1 (neon); stay under about 0.6 for solid fills and thick lines.
+`lf.hue_arc(colours)` is the spread of hues in degrees: under 60 is one family, over 120 is
+complementary. The house crimson (0.78) and teal (0.57) are about 170 apart; crimson is
+only ever a half-transparent band or a thin line, which is what keeps it calm.
 
 ## Conventions
 
@@ -160,13 +169,12 @@ crimson and teal are about 170.
   posterior in crimson (teal and the blue measurement do not separate), a zoomed panel beside it.
 - Plot large values in scaled units and put the scale in the label
   (`r"Iterations ($\times 10^6$)"`), never matplotlib's offset text.
-- `paths` puts a neutral grey credible band under the draws by default, computed from all
-  draws. Pass `level=None` when the panel already has a band (another method's `ribbon`, a
-  `band` of the same posterior).
-- Flat draws over the grey interval are the default look. `gradient` is the alternative: it
-  shades each draw by its distance from the pointwise mean in standard deviations (three
-  flat bands: under 1, 1 to 2, over 2) and leaves the grey interval off unless asked for
-  with `level=0.95`.
+- `paths` draws the draws alone: a hundred faint lines already show the spread, so an
+  interval under them is redundant. Pass `level=0.95` for a neutral grey credible band
+  under them (computed from all draws) only when a bound has to be read off the figure.
+- Flat draws are the default look. `gradient` is the alternative: it shades each draw by its
+  distance from the pointwise mean in standard deviations (three flat bands: under 1, 1 to
+  2, over 2).
 - Use `gradient=True` when the draws are the only posterior in the panel. Next to another
   method's `ribbon` keep them flat; the dark core hides the ribbon's median line.
 - `gradient=True` is the heat ramp. Pass a colour for shades of that colour, or a ramp name.
@@ -217,16 +225,17 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
    share a unit; otherwise trimmed spines and no grid.
-5. Colour. Start analogous: one hue family with series split by lightness and saturation
-   (`lf.ramp(n, colour)` or a set from `lf.analogous()`), grey for context and trend lines.
-   Posterior against predictive keeps the house crimson then teal.
+5. Colour. Posterior against predictive keeps the house crimson then teal. Other series
+   take clearly different hues at moderate saturation (`lf.MUTED`, or a set from
+   `lf.combos(n, vivid=0.5)`); an ordered sweep takes shades of one hue (`lf.ramp(n, colour)`).
+   Grey for context and trend lines. Nothing neon.
 6. Weight. Markers and lines must read at print size: `lf.points` and the default widths
    are sized for that. Stress a series with weight or a dash pattern before a new colour.
 7. Order. Context first, then bands, lines, points, and the truth last.
 8. Legend. `lf.legend_above`, entries in reading order: data, then lines.
 
 Then render, look, and repeat. When the request does not say, default to: full text width
-(6.5 in), 95% intervals, flat draws over the grey interval, axis labels with units, no title.
+(6.5 in), 95% intervals, flat draws with no interval under them, axis labels with units, no title.
 
 ## Design checklist
 
@@ -263,11 +272,12 @@ Colour
 9. Design in black, grey and line styles first. Then add one colour, two at most.
 10. One data subset keeps one colour in every figure of a manuscript. A new colour appears
     only when it carries new information.
-11. No bright complementary pairs (red and green, cyan and red, yellow and purple), no
-    yellow on white. Red reads as wrong and green as right, so use them only when that is
-    meant. The house crimson and teal are close to complementary: keep them as band against
-    thin lines, never as two solid fills side by side. Everywhere else prefer an analogous
-    set (`lf.analogous()`), varying lightness and saturation before hue.
+11. No neon: nothing fully saturated and bright, no yellow on white. Complementary pairs
+    are fine when both colours are muted (`lf.vividness` under about 0.6); it is high
+    saturation that tires the eye, not opposite hues. Red reads as wrong and green as
+    right, so use them only when that is meant. The house crimson is vivid as a solid:
+    keep it a half-transparent band or a thin line, never a solid fill beside the teal.
+    Colours that must be told apart differ in hue, not only in lightness.
 12. Ordered data takes a ramp, never a rainbow. Every `lf.ramp` runs dark to light, so the
     order survives greyscale printing. A gradient should mean something (crimson is the
     tight or worse end).
@@ -312,7 +322,7 @@ Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
 `examples/feasible_regions.py` draws feasible regions with nested limit contours, a level
 key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an edged scatter
 with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
-`examples/combos.py` draws every analogous combination in `lf.COMBOS` as labelled swatches.
+`examples/combos.py` draws the muted combinations in `lf.COMBOS` as labelled swatches.
 
 ## Not covered yet
 

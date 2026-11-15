@@ -22,7 +22,7 @@ fig.supxlabel("$x$")
 fig.supylabel("$u$")
 lf.legend_above(fig)
 lf.save(fig, out / "gradient_draws")
-assert ["interval" in " ".join(ax.get_legend_handles_labels()[1]) for ax in axes.flat] == [True] + 15 * [False]
+assert not any("interval" in label for ax in axes.flat for label in ax.get_legend_handles_labels()[1])
 
 X, Y = np.meshgrid(np.linspace(0, 1, 80), np.linspace(0, 1, 80))
 R = np.hypot(X - 0.5, Y - 0.5)
