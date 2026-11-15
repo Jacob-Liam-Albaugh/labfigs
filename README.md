@@ -1,6 +1,6 @@
 # labfigs
 
-One plotting library for the lab's figures, with a house style modelled on Kairui Hao's thesis figures.
+One plotting library for the lab's figures, with a house style modelled on Kairui Hao's thesis figures and a design checklist adapted from Andrey Churkin's [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/).
 It is matplotlib and seaborn underneath: one style call, plus helpers for the elements that keep coming back (posterior bands, sample draws, method ribbons, intervals, heatmaps, colour ramps).
 A Claude Code skill in `skill/` teaches an agent to use it, so figures look the same in every project.
 
@@ -72,6 +72,10 @@ python examples/hao_figures.py
 python examples/hao_replicas.py
 ```
 
+```bash
+python examples/feasible_regions.py
+```
+
 Each writes its figure next to the script.
 
 The thesis Fig. 3.11 layout (`duffing_311.py`):
@@ -117,6 +121,30 @@ Filter paper Fig. 14, whole record beside a zoom:
 Filter paper Fig. 16:
 
 ![Fig. 16](examples/fig_16.png)
+
+Feasible regions with nested limit contours, a level key and a fine grid (`feasible_regions.py`):
+
+![Feasible regions](examples/feasible_regions.png)
+
+## Design checklist
+
+Before a figure goes into a paper:
+
+- Say in one sentence what it shows, and remove what does not serve that sentence.
+- Set `lf.subplots(width=)` to the printed width and include the PDF unscaled, so the text prints at body-text size.
+- Check it in the compiled manuscript: font size, line weights, marker sizes, legend.
+- Use few colours, and keep one colour per data subset across every figure.
+- Use a ramp for ordered data, never a rainbow.
+- Use the PDF in the paper; the PNG is for slides.
+- Avoid pie charts and 3D.
+- Expect several rounds of render, look, fix.
+
+The full checklist is in [skill/SKILL.md](skill/SKILL.md).
+
+## References
+
+- Kairui Hao's thesis and filter paper figures: the source of the house style (colours, trimmed spines, legend above).
+- Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`) and the feasible-region example layout. His [video walkthrough](https://youtu.be/i-HAjex6VtM) covers the same principles.
 
 ## Claude Code skill
 

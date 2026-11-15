@@ -6,7 +6,8 @@ description: Make figures with the lab's house style (labfigs). Use whenever wri
 # labfigs
 
 `labfigs` is the lab's one plotting library: a house style modelled on Kairui Hao's thesis
-figures, plus helpers for the plot elements that recur. Source lives at
+figures and the design principles of Andrey Churkin's BeautifulFigures, plus helpers for the
+plot elements that recur. Source lives at
 `~/Documents/Predictive Science Lab/labfigs` (private repo `Jacob-Liam-Albaugh/labfigs`).
 
 ## Rules
@@ -20,6 +21,7 @@ figures, plus helpers for the plot elements that recur. Source lives at
 5. A plotting script should be data loading plus a handful of `lf.` calls. If the plotting
    part passes about 20 lines, something belongs in the library.
 6. Open the saved PNG and look at it before reporting the figure as done.
+7. Run the design checklist below on every figure that goes into a paper or report.
 
 ## API
 
@@ -50,6 +52,11 @@ for y, c in zip(curves, lf.ramp(len(curves), "heat")):  # ordered sweep, dark to
     ax.plot(x, y, color=c)
 lf.heatmap(ax, x, y, z, vmin=0, vmax=1)   # 2D field with its colourbar; z has shape (len(y), len(x))
 lf.heatmap(ax, x, y, error, center=0)     # signed field: teal below, white at 0, crimson above
+free = lf.region(ax, corners, "C2", label="No coordination")  # polygon outline; dashed=True for a thin dashed one
+lf.contours(ax, x, y, z, levels, colors, within=free)  # thin contour lines, clipped to a region
+lf.level_key(ax, labels, colors, "Limit:")  # row of boxed level values above the panel, one colour each
+lf.ramp(n, ("crimson", "C2"))             # n colours blending from one colour to another
+lf.grid(ax)                               # fine major and minor grid for reading values off; save with trim=False
 lf.save(fig, "out/name")                  # trims spines, writes name.pdf and name.png
 ```
 
@@ -133,6 +140,38 @@ methods apart.
   `ribbon`. Two sets of draws on top of each other hide both.
 - Sample paths need the draws: every sampling script saves its draws (`.npz`), not only
   summaries, so `lf.paths` can show them later without re-running the sampler.
+- Regions in a plane (feasible sets, operating envelopes): `lf.region` for each outline,
+  `lf.contours(..., within=region)` for the levels inside it coloured by
+  `lf.ramp(n, (tight, loose))`, `lf.level_key` to name the levels, `lf.grid`, equal aspect,
+  `lf.save(trim=False)`. When each panel has its own colour, each panel gets its own legend
+  (`lf.legend_above(ax, ncols=1, frameon=False)`); crimson is the shared tight end of every blend.
+- Panel letters go under the x label: `ax.set_xlabel("$P$ (kW)\n(a)")`.
+
+## Design checklist
+
+Adapted from Andrey Churkin's BeautifulFigures (https://github.com/AndreyChurkin/BeautifulFigures).
+
+1. Message first. Say in one sentence what the figure shows, then remove every element
+   that does not serve that sentence.
+2. Size for the page. Set `lf.subplots(width=)` to the printed width (6.5 in for full text
+   width, 3.5 in for one column of a two-column paper) and include the PDF unscaled, so the
+   10 pt text prints at the size of the body text.
+3. Check it in the real layout. A figure that looks right on screen can fail on the page:
+   compile the manuscript and check font size, line weights, marker sizes and the legend.
+4. Few colours, each with a job. One data subset keeps one colour in every figure of a
+   manuscript, indicator colours keep one meaning, and a new colour appears only when it
+   carries new information.
+5. Ordered data takes a ramp, never a rainbow. Every `lf.ramp` runs dark to light, so the
+   order survives greyscale printing.
+6. Legend compact, above the axes, never over the data.
+7. Points sit above lines. When the points are the subject, the trend line is neutral
+   (`lf.REFERENCE`).
+8. Both axes in the same unit: `aspect="equal"`. Values meant to be read off: `lf.grid(ax)`.
+9. Vector output. The PDF goes into the paper; the PNG is for slides and READMEs. Add
+   `formats=("pdf", "png", "svg")` when the figure will be edited by hand.
+10. No pie charts. No 3D unless the shape of the surface is the message; a 2D field is
+    `lf.heatmap`.
+11. Plan for several rounds: render, look, fix, render again.
 
 ## Running
 
@@ -150,8 +189,10 @@ thesis figure types: parameter intervals over a sweep (Fig. 3.2), densities per 
 (Fig. 6.2, 4.6), a grid with shaded panels (Fig. 4.9), convergence traces (Fig. 6.7).
 `examples/hao_replicas.py` redraws three whole figures: a zoomed second row (thesis
 Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
+`examples/feasible_regions.py` draws feasible regions with nested limit contours, a level
+key and a fine grid.
 
 ## Not covered yet
 
-Corner plots, contour plots, and one-call recipes for whole figure types. Ask before
+Corner plots, filled contour plots, 3D surfaces, and one-call recipes for whole figure types. Ask before
 inventing a style for these.

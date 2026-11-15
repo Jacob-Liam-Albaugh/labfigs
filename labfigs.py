@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib.collections import LineCollection
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, is_color_like
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from matplotlib.patches import ConnectionPatch
+from matplotlib.patches import ConnectionPatch, Polygon
 from matplotlib.transforms import offset_copy
 
 POSTERIOR = "crimson"
@@ -72,6 +72,8 @@ def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, n=None, **kw):
 def shades(name):
     if isinstance(name, str) and name in RAMPS:
         return RAMPS[name]
+    if not is_color_like(name):
+        return LinearSegmentedColormap.from_list("", name), 0.0, 1.0
     return LinearSegmentedColormap.from_list("", ["white", name, "black"]), 0.9, 0.2
 
 
@@ -154,6 +156,34 @@ def density(ax, samples, fill=False, **kw):
 
 def shade(ax):
     ax.set_facecolor("0.85")
+
+
+def region(ax, corners, color, dashed=False, **kw):
+    style = {"ls": "--", "lw": 0.8} if dashed else {"lw": 1.6}
+    return ax.add_patch(Polygon(corners, fill=False, ec=color, **style, **kw))
+
+
+def contours(ax, x, y, z, levels, colors, within=None, **kw):
+    lines = ax.contour(x, y, z, levels=levels, colors=colors, linewidths=0.6, **kw)
+    lines.set_clip_path(within)
+    return lines
+
+
+def level_key(ax, labels, colors, title=None):
+    for i, (label, color) in enumerate(zip(labels, colors)):
+        ax.annotate(
+            label, ((i + 0.5) / len(labels), 1), xycoords="axes fraction", xytext=(0, 8), textcoords="offset points",
+            ha="center", size="xx-small", bbox={"boxstyle": "round,pad=0.12", "fc": "none", "ec": color, "lw": 0.8})
+    if title:
+        ax.annotate(title, (1, 1), xycoords="axes fraction", xytext=(0, 20), textcoords="offset points", ha="right")
+
+
+def grid(ax):
+    ax.minorticks_on()
+    ax.tick_params(which="minor", length=0)
+    ax.grid(which="major", color=REFERENCE, lw=0.4, alpha=0.4)
+    ax.grid(which="minor", color=REFERENCE, lw=0.2, alpha=0.3)
+    ax.set_axisbelow(True)
 
 
 def signal(ax, x, y, color=SERIES[2], **kw):
