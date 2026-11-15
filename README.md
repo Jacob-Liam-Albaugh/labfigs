@@ -68,6 +68,10 @@ python examples/palettes.py
 python examples/hao_figures.py
 ```
 
+```bash
+python examples/hao_replicas.py
+```
+
 Each writes its figure next to the script.
 
 The thesis Fig. 3.11 layout (`duffing_311.py`):
@@ -101,6 +105,18 @@ A grid with shaded panels and two-colour titles, as in Fig. 4.9:
 Convergence traces, as in Fig. 6.7:
 
 ![Convergence](examples/convergence.png)
+
+Three whole figures redrawn on synthetic data (`hao_replicas.py`). Thesis Fig. 6.3, with a zoomed second row:
+
+![Fig. 6.3](examples/fig_6_3.png)
+
+Filter paper Fig. 14, whole record beside a zoom:
+
+![Fig. 14](examples/fig_14.png)
+
+Filter paper Fig. 16:
+
+![Fig. 16](examples/fig_16.png)
 
 ## Claude Code skill
 

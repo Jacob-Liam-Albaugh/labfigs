@@ -44,6 +44,8 @@ lf.legend_above(fig, ncols=3)             # wrap a long legend (five or more ent
 fig, axes = lf.subplots(2, 3, n=5)        # five panels, short bottom row centred; axes comes back flat
 lf.density(ax, samples, label="SVI")      # density curve of draws; fill=True for a filled one
 lf.shade(ax)                              # grey background marking a panel as different (unconditioned, held out)
+lf.signal(ax, t, y, label="Measurement")  # dense measured time series: hairline, open dashes, blue
+lf.zoom(top, bottom, 0, 0.1)              # dashed lines from the span [0, 0.1] of top to the panel below it
 for y, c in zip(curves, lf.ramp(len(curves), "heat")):  # ordered sweep, dark to light
     ax.plot(x, y, color=c)
 lf.heatmap(ax, x, y, z, vmin=0, vmax=1)   # 2D field with its colourbar; z has shape (len(y), len(x))
@@ -109,6 +111,8 @@ methods apart.
   `ax.axhspan(lo, hi, color=lf.REFERENCE, alpha=0.3, lw=0, label="NUTS")`.
 - A panel showing two named quantities gets two titles in their colours:
   `ax.set_title(a, loc="left", color="C1")` and `ax.set_title(b, loc="right", color="C0")`.
+- Dense oscillating signal against a measurement: `lf.ribbon(..., lw=0.3)` then `lf.signal`,
+  posterior in crimson (teal and the blue measurement do not separate), a zoomed panel beside it.
 - Plot large values in scaled units and put the scale in the label
   (`r"Iterations ($\times 10^6$)"`), never matplotlib's offset text.
 - `paths` puts a neutral grey credible band under the draws by default, computed from all
@@ -144,6 +148,8 @@ Worked examples in the library: `examples/duffing_311.py` reproduces thesis Fig.
 `examples/palettes.py` shows every ramp as a sweep, `examples/hao_figures.py` has the other
 thesis figure types: parameter intervals over a sweep (Fig. 3.2), densities per method
 (Fig. 6.2, 4.6), a grid with shaded panels (Fig. 4.9), convergence traces (Fig. 6.7).
+`examples/hao_replicas.py` redraws three whole figures: a zoomed second row (thesis
+Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
 
 ## Not covered yet
 

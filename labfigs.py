@@ -8,6 +8,8 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
+from matplotlib.patches import ConnectionPatch
+from matplotlib.transforms import offset_copy
 
 POSTERIOR = "crimson"
 PREDICTIVE = "lightseagreen"
@@ -25,6 +27,7 @@ STRETCH = {
 }
 RAMPS = {"heat": (HEAT, 1.0, 0.4)} | {name.lower(): (plt.get_cmap(name), *ends) for name, ends in STRETCH.items()}
 TEXT_WIDTH = 6.5
+SPINE_OFFSET = 5
 
 
 def use(tex=None, font_size=10, series=SERIES):
@@ -153,6 +156,20 @@ def shade(ax):
     ax.set_facecolor("0.85")
 
 
+def signal(ax, x, y, color=SERIES[2], **kw):
+    return ax.plot(x, y, color=color, ls=(0, (3, 3)), lw=0.3, **kw)
+
+
+def zoom(wide, detail, x0, x1, room=0.12):
+    fig, rc = wide.figure, plt.rcParams
+    fig.get_layout_engine().set(hspace=room)
+    labels = SPINE_OFFSET + rc["xtick.major.size"] + rc["xtick.major.pad"] + 1.4 * rc["font.size"]
+    below_labels = offset_copy(wide.get_xaxis_transform(), fig, y=-labels, units="points")
+    for start, end in zip((x0, x1), detail.dataLim.intervalx):
+        fig.add_artist(ConnectionPatch(
+            (start, 0), (end, 1), below_labels, detail.get_xaxis_transform(), color=TRUE, ls="--", lw=0.5))
+
+
 def split(ax, x, overshoot=0.12):
     return ax.axvline(x, -overshoot, 1 + overshoot, color=TRUE, ls="--", lw=0.8, clip_on=False)
 
@@ -177,7 +194,7 @@ def save(fig, path, trim=True, formats=("pdf", "png")):
     if trim:
         for ax in fig.axes:
             if ax.get_label() != "<colorbar>":
-                sns.despine(ax=ax, offset=5, trim=True)
+                sns.despine(ax=ax, offset=SPINE_OFFSET, trim=True)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     for ext in formats:
