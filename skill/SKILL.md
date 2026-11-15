@@ -89,8 +89,8 @@ teal page with a soft glow and light ink (slides and posters, not papers),
 | `lf.TRUE` | ground truth, always drawn last so it sits on top |
 
 Several series (methods, a sweep over a parameter): use the default colour cycle, `"C0"`,
-`"C1"`, ... It runs crimson, teal, then blue, orange, green, purple, brown, olive, so the
-first two series always match Fig. 3.11. Give one method the same `"Cn"` in every figure of
+`"C1"`, ... It runs crimson, teal, then muted blue, orange, green, purple, brown, olive (seaborn's
+`deep` set, nothing neon), so the first two series always match Fig. 3.11. Give one method the same `"Cn"` in every figure of
 a report. Do not pick colours by hand.
 
 An ordered sweep (pressure, noise level, step count) is not a set of methods: colour it with

@@ -18,7 +18,8 @@ POSTERIOR = "crimson"
 PREDICTIVE = "lightseagreen"
 REFERENCE = "0.55"
 TRUE = "black"
-SERIES = [POSTERIOR, PREDICTIVE, "tab:blue", "tab:orange", "tab:green", "tab:purple", "tab:brown", "tab:olive"]
+deep = sns.color_palette("deep").as_hex()
+SERIES = [POSTERIOR, PREDICTIVE, *(deep[i] for i in (0, 1, 2, 4, 5, 8))]
 MUTED = ["#BC5A55", "#66909F", "#DBA3AD", "#BF6468", "#6B7883", "#9A7078", "#8795A2"]
 HEAT = LinearSegmentedColormap.from_list(
     "heat", ["#E2E6BD", "#F1DE81", "#F6C971", "#EEAB65", "#DA8459", "#B9534C", "#8E063B"])

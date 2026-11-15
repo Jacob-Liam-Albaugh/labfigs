@@ -25,5 +25,5 @@ lf.save(fig, out / "combos", trim=False)
 
 assert sum(map(len, columns.values())) == len(sets) and all(lf.vividness(colours) <= 0.5 for colours in sets.values())
 assert lf.vividness(["yellow"]) == 1 and lf.vividness(lf.MUTED[:2]) < 0.5 < lf.vividness([lf.PREDICTIVE]) < lf.vividness([lf.POSTERIOR])
-assert lf.hue_arc(lf.MUTED[:2]) > 120 and len(lf.combos()) == len(lf.COMBOS) > len(lf.combos(arc=(0, 60))) > 100
+assert lf.vividness(lf.SERIES[2:]) < 0.6 and lf.hue_arc(lf.MUTED[:2]) > 120 and len(lf.combos()) == len(lf.COMBOS) > len(lf.combos(arc=(0, 60))) > 100
 print("wrote", out / "combos.svg", {title: len(keys) for title, keys in columns.items()})
