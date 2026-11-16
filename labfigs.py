@@ -17,7 +17,7 @@ from matplotlib.text import Text
 from matplotlib.ticker import FixedFormatter, MaxNLocator
 from matplotlib.transforms import offset_copy
 
-from labfigs_combos import COMBOS
+from labfigs_combos import COMBOS, KINDS
 
 POSTERIOR = "crimson"
 PREDICTIVE = "lightseagreen"
@@ -140,6 +140,8 @@ def shades(name):
         return RAMPS[name]
     if is_color_like(name):
         return LinearSegmentedColormap.from_list("", ["white", name, "black"]), 0.9, 0.2
+    if isinstance(name, str):
+        name = COMBOS[name]
     ends = (0.0, 1.0) if luma(name[0]) < luma(name[-1]) else (1.0, 0.0)
     return LinearSegmentedColormap.from_list("", name), *ends
 
@@ -159,10 +161,16 @@ def vividness(colours):
     return np.ptp([to_rgb(colour) for colour in colours], axis=1).max()
 
 
-def combos(size=None, vivid=1.0, arc=(0, 360)):
+def kind_of(key):
+    named = next((kind for kind, names in KINDS.items() if key in names), "sequential")
+    return named if isinstance(key, str) else "combination"
+
+
+def combos(size=None, vivid=1.0, arc=(0, 360), kind=None):
     return {
         key: colours for key, colours in COMBOS.items()
-        if size in (None, len(colours)) and vividness(colours) <= vivid and arc[0] <= hue_arc(colours) <= arc[1]}
+        if size in (None, len(colours)) and vividness(colours) <= vivid and arc[0] <= hue_arc(colours) <= arc[1]
+        and kind in (None, kind_of(key))}
 
 
 def swatches(ax, sets):
@@ -172,7 +180,8 @@ def swatches(ax, sets):
     ax.set(yticks=range(len(sets)), yticklabels=[str(key).replace("_", " ") for key in sets], xticks=[])
     ax.set(xlim=(0, 1), ylim=(len(sets) - 0.4, -0.6))
     ax.tick_params(length=0)
-    sns.despine(ax=ax, left=True, bottom=True)
+    # blanks the spines instead of hiding them, since the trim in save would show hidden ones again
+    ax.spines[:].set_color("none")
 
 
 def ramp(n, name="heat"):
@@ -256,7 +265,9 @@ def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):
     cmap = low_to_high(ramp)
     if center is not None:
         reach = np.nanmax(np.abs(z - center))
-        cmap, kw = DIVERGING, {"vmin": center - reach, "vmax": center + reach, **kw}
+        named = isinstance(ramp, str) and ramp in KINDS["diverging"]
+        cmap = LinearSegmentedColormap.from_list(ramp, COMBOS[ramp]) if named else DIVERGING
+        kw = {"vmin": center - reach, "vmax": center + reach, **kw}
     mesh = ax.pcolormesh(x, y, z, cmap=cmap, shading="auto", rasterized=True, **kw)
     ax.figure.colorbar(mesh, ax=ax, label=label, pad=0.03).outline.set_visible(False)
     return mesh

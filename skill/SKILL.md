@@ -59,7 +59,7 @@ lf.zoom(top, bottom, 0, 0.1)              # dashed lines from the span [0, 0.1] 
 for y, c in zip(curves, lf.ramp(len(curves), "heat")):  # ordered sweep, dark to light
     ax.plot(x, y, color=c)
 lf.heatmap(ax, x, y, z, vmin=0, vmax=1)   # 2D field with its colourbar; z has shape (len(y), len(x))
-lf.heatmap(ax, x, y, error, center=0)     # signed field: teal below, white at 0, crimson above
+lf.heatmap(ax, x, y, error, center=0)     # signed field: teal below, white at 0, crimson above; ramp="vik" for another pair
 free = lf.region(ax, corners, "C2", label="No coordination")  # polygon outline; dashed=True for a thin dashed one
 lf.contours(ax, x, y, z, levels, colors, within=free)  # thin contour lines, clipped to a region
 lf.level_key(ax, labels, colors, "Limit:")  # row of boxed level values above the panel, one colour each
@@ -140,7 +140,12 @@ place of a ramp name and gives shades of that colour (`lf.ramp(n, "C1")`,
 (`ramp="heat"` by default; ramps that run dark to light, such as `"mako"` and `"viridis"`,
 are flipped to match). Different quantities in one figure take different ramps (a field
 and its standard deviation). A signed field (an error, a residual) takes `center=0`, which
-switches to the teal-white-crimson map with limits symmetric about the centre. Panels that
+switches to the teal-white-crimson map with limits symmetric about the centre. A second signed
+quantity in the same figure takes a named diverging scheme, low end first:
+`center=0, ramp="vik"` (blue to red-brown), `"broc"`, `"cork"`, `"BrBG"`, `"PRGn"`; `"berlin"`
+and `"tofino"` have a dark centre, for `use(dark=True)`. An angle or a phase takes a cyclic
+scheme, whose two ends are one colour: `ramp="vikO"` (or `"brocO"`, `"corkO"`) with `vmin`
+and `vmax` one period apart. Panels that
 are compared against each other share `vmin` and `vmax`. Set `aspect="equal"` on the axes
 when x and y are the same physical quantity. Overlay sensors with `lf.data`.
 
@@ -168,13 +173,25 @@ steps for ordered sweeps. Grey is free and goes with anything.
 `lf.COMBOS` is the library to pull from, so no script needs a hex colour:
 
 - `lf.COMBOS[120]`: Sanzo Wada's 348 combinations by number, two to four colours each.
-- `lf.COMBOS["devon"]`: 38 single-family ColorSchemes.jl schemes by name (`"amp"`,
-  `"oslo"`, `"sienna"`, ...), up to nine stops in the source's order. These are ramps for
-  ordered data, not series colours.
-- `lf.combos(size=None, vivid=1.0, arc=(0, 360))`: the combinations of `size` colours whose
-  most vivid colour is at most `vivid` and whose hues span between `arc[0]` and `arc[1]`
-  degrees (greys and near-blacks count as neutral). `lf.combos(2, vivid=0.5, arc=(120, 360))`
-  is the muted complementary pairs; `examples/combos.svg` shows everything under 0.5.
+- `lf.COMBOS["devon"]`: 46 sequential ColorSchemes.jl schemes by name (`"amp"`, `"oslo"`,
+  `"acton"`, `"navia"`, `"grayC"` for a neutral grey, ...), up to nine stops in the source's
+  order. These are ramps for ordered data, not series colours. A name works wherever a ramp
+  name does: `lf.ramp(n, "acton")`, `ramp="navia"`, `gradient="davos"`. A name that is also
+  a plain colour (`"gold"`, `"pink"`, `"sienna"`) means the colour; pass `lf.COMBOS["gold"]`
+  for the scheme.
+- The other kinds, listed in `lf.KINDS`: `"diverging"` (`"vik"`, `"broc"`, `"cork"`,
+  `"BrBG"`, `"PRGn"`, `"berlin"`, `"tofino"`; for `heatmap(center=)`), `"cyclic"` (`"vikO"`,
+  `"brocO"`, `"corkO"`; for angles) and `"categorical"` (Paul Tol's colour-blind-safe sets
+  `"tol_bright"`, seven colours, and `"tol_muted"`, nine; for
+  `lf.use(series=lf.COMBOS["tol_muted"])` when a figure must survive colour-blind reading).
+  Keep the sand and pale blue of the Tol sets for fills and thick lines. Every one of these
+  has vividness at most 0.6; `examples/schemes.svg` shows them.
+- `lf.combos(size=None, vivid=1.0, arc=(0, 360), kind=None)`: the combinations of `size`
+  colours whose most vivid colour is at most `vivid` and whose hues span between `arc[0]`
+  and `arc[1]` degrees (greys and near-blacks count as neutral), of one `kind`
+  (`"combination"` for Wada's, `"sequential"`, `"diverging"`, `"cyclic"`, `"categorical"`).
+  `lf.combos(2, vivid=0.5, arc=(120, 360))` is the muted complementary pairs;
+  `examples/combos.svg` shows the combinations and ramps under 0.5.
 
 Use them through the calls that already exist: `lf.use(series=lf.COMBOS[44])` then `"C0"`,
 `"C1"`; `lf.ramp(n, lf.COMBOS["devon"])` for `n` shades, dark first; `ramp=lf.COMBOS["amp"]`
@@ -413,7 +430,8 @@ Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
 `examples/feasible_regions.py` draws feasible regions with nested limit contours, a level
 key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an edged scatter
 with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
-`examples/combos.py` draws the muted combinations in `lf.COMBOS` as labelled swatches.
+`examples/combos.py` draws the muted combinations in `lf.COMBOS` as labelled swatches, and
+`examples/schemes.py` its diverging, cyclic and categorical schemes, each in use.
 `examples/defaults.py` shows what needs no code: dodged intervals with true-value marks on a
 log and a categorical axis, a case tag, a `%` label, fitted ticks and a warning from `lf.save`.
 

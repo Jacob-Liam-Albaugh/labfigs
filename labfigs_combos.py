@@ -1,4 +1,4 @@
-"""Colour combinations to pull from: Sanzo Wada's 348 (by number) and the analogous ColorSchemes.jl schemes (by name)."""
+"""Colour combinations to pull from: Sanzo Wada's 348 (by number) and ColorSchemes.jl schemes (by name)."""
 
 COMBOS = {
     1: ["#d96629", "#0093a5"],
@@ -387,4 +387,31 @@ COMBOS = {
     "sienna": ["#772c12", "#cb5c19", "#e99752", "#ecca9a", "#e9e0cf"],
     "sun": ["#780004", "#d21f01", "#f76008", "#ffa514", "#ffd120"],
     "valentine": ["#841c33", "#9d2a44", "#b44861", "#d0758d", "#ecabbe", "#f5d6df"],
+    "acton": ["#260d40", "#413362", "#595481", "#7e638e", "#a86690", "#cf789e", "#dda1c2", "#e8cae1", "#f0eafa"],
+    "tokyo": ["#1c0e34", "#512446", "#6c4750", "#715d52", "#747053", "#798b56", "#87b666", "#b8e8a1", "#effcdd"],
+    "lipari": ["#031326", "#183e61", "#525b7a", "#785f72", "#a56267", "#d86e5e", "#e99973", "#e7c398", "#fdf5da"],
+    "navia": ["#031327", "#073966", "#1b608f", "#2f798b", "#418a80", "#59a072", "#87c269", "#d1e39f", "#fcf4d9"],
+    "davos": ["#00054a", "#143277", "#2f5a96", "#4e799d", "#6c8e93", "#8ba388", "#bbc794", "#eff0cb", "#fefefe"],
+    "dense": ["#e6f1f1", "#b1d6e3", "#86b9e3", "#7397e4", "#7871d5", "#784eb3", "#6f2e85", "#5a1851", "#360e24"],
+    "tempo": ["#fff6f4", "#d2d9c7", "#a1c1a1", "#69ab89", "#2a937f", "#117777", "#1b5968", "#1b3c56", "#151d44"],
+    "grayC": ["#000000", "#262626", "#434343", "#5f5f5f", "#777777", "#909090", "#afafaf", "#d3d3d3", "#ffffff"],
+    "vik": ["#001261", "#023a7b", "#116496", "#5496b7", "#a7c9da", "#ece5e0", "#e1b8a0", "#cd8961", "#b75a26", "#852306", "#590008"],
+    "broc": ["#2c1a4c", "#284174", "#3f6b99", "#7697b7", "#b3c5d7", "#ebefec", "#dcdbb8", "#b6b67c", "#81814c", "#505023", "#262600"],
+    "cork": ["#2c194c", "#284275", "#3d6b98", "#6f92b3", "#adc1d4", "#e6edec", "#b7cfb7", "#7ba77a", "#438142", "#195615", "#0f2903"],
+    "BrBG": ["#543005", "#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#f5f5f5", "#c7eae5", "#80cdc1", "#35978f", "#01665e", "#003c30"],
+    "PRGn": ["#40004b", "#762a83", "#9970ab", "#c2a5cf", "#e7d4e8", "#f7f7f7", "#d9f0d3", "#a6dba0", "#5aae61", "#1b7837", "#00441b"],
+    "berlin": ["#9eb0ff", "#60a5df", "#3280a5", "#20526a", "#112732", "#190c09", "#371000", "#5f1f0a", "#964a36", "#ca7b71", "#ffadad"],
+    "tofino": ["#ded9ff", "#98a8e1", "#5777ba", "#304a7b", "#19253d", "#0d1613", "#18321a", "#2b5b2f", "#4a8d4b", "#91be74", "#dbe69b"],
+    "vikO": ["#4f1a3d", "#3f2c5b", "#334d80", "#4575a1", "#759ebc", "#b0bec8", "#d5beb3", "#d7a387", "#c47954", "#a14b2c", "#7a251e", "#601628", "#4f1a3d"],
+    "brocO": ["#372f38", "#363957", "#425982", "#617fa5", "#8aa3bf", "#b7c5d0", "#cfd3c5", "#c2c29b", "#9d9c6a", "#757445", "#54512e", "#3e382a", "#372f38"],
+    "corkO": ["#3f3e3a", "#3e3f52", "#45567a", "#5f7a9f", "#849eba", "#a7bec8", "#afcbbc", "#96be99", "#71a16c", "#547d44", "#465d2e", "#41482f", "#3f3e3a"],
+    "tol_bright": ["#4477aa", "#ee6677", "#228833", "#ccbb44", "#66ccee", "#aa3377", "#bbbbbb"],
+    "tol_muted": ["#332288", "#88ccee", "#44aa99", "#117733", "#999933", "#ddcc77", "#cc6677", "#882255", "#aa4499"],
+}
+
+# lists the named schemes that are not dark-to-light ramps; every other name is sequential
+KINDS = {
+    "diverging": ["vik", "broc", "cork", "BrBG", "PRGn", "berlin", "tofino"],
+    "cyclic": ["vikO", "brocO", "corkO"],
+    "categorical": ["tol_bright", "tol_muted"],
 }

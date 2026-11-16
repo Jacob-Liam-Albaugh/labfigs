@@ -4,7 +4,7 @@ from pathlib import Path
 import labfigs as lf
 
 out = Path(__file__).parent
-sets = lf.combos(vivid=0.5)
+sets = lf.combos(vivid=0.5, kind="combination") | lf.combos(vivid=0.5, kind="sequential")
 wada = [key for key in sets if isinstance(key, int)]
 pairs = [key for key in wada if len(sets[key]) == 2]
 columns = {
