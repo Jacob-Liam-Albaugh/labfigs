@@ -11,7 +11,7 @@ out = Path(__file__).parent
 iris = load_iris()
 STEPS = ("Matplotlib defaults", "Range set around the data", "Font size and style", "Grid lines, equal aspect",
          "Colour scheme", "Larger markers, heavier lines", "Display order", "Compact legend")
-SPECIES = ((0, "tab:blue", "C0"), (2, "tab:orange", "C2"))
+SPECIES = ((0, "tab:blue", "C0"), (2, "tab:orange", "C1"))
 FITS = ((1, "-", "LR", "tab:green"), (2, "--", "PR", "tab:red"))
 span = np.linspace(2, 10, 200)
 
@@ -25,7 +25,7 @@ def panel(ax, step):
             ax.scatter(x, y, s=4, color=color if step >= 4 else plain)
     for kind, degree, style, label, bare in ((k, *fit) for k, *_ in SPECIES for fit in FITS):
         x, y = iris.data[iris.target == kind, :2].T
-        look = dict(color="C1", ls=style) if step >= 4 else dict(color=bare)
+        look = dict(color="C2", ls=style) if step >= 4 else dict(color=bare)
         ax.plot(span, np.polyval(np.polyfit(x, y, degree), span), lw=1.3 if step >= 5 else 0.6,
                 zorder=2 if step >= 6 else 4, label=label, **look)
     ax.set(xlabel="Sepal length (cm)", ylabel="Sepal width (cm)", box_aspect=1)
@@ -38,7 +38,7 @@ def panel(ax, step):
         lf.legend_above(ax, gap=0.04, frameon=False, columnspacing=0.8, handletextpad=0.3)
 
 
-lf.use(font="mono", series=lf.PURPLE_TEAL)
+lf.use(font="mono", series="Kandinsky")
 fig, axes = lf.subplots(2, 4, width=13, aspect=1.15)
 fig.get_layout_engine().set(hspace=0.16)
 for step, ax in enumerate(axes.flat):

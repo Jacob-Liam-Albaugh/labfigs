@@ -9,7 +9,7 @@ import seaborn as sns
 from matplotlib.cm import ScalarMappable
 from matplotlib.collections import LineCollection, QuadMesh
 from matplotlib.container import ErrorbarContainer
-from matplotlib.colors import LinearSegmentedColormap, Normalize, is_color_like, rgb_to_hsv, to_rgb
+from matplotlib.colors import LinearSegmentedColormap, Normalize, get_named_colors_mapping, is_color_like, rgb_to_hsv, to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import ConnectionPatch, Polygon
@@ -19,27 +19,30 @@ from matplotlib.transforms import offset_copy
 
 from labfigs_combos import COMBOS, KINDS
 
-POSTERIOR = "crimson"
-PREDICTIVE = "lightseagreen"
+CRIMSON = "crimson"
+TEAL = "lightseagreen"
+# points matplotlib's "teal" at the house teal, so the name is one colour as a line and as a ramp
+get_named_colors_mapping()["teal"] = to_hex(TEAL)
 REFERENCE = "0.55"
 TRUE = "black"
-deep = sns.color_palette("deep").as_hex()
-SERIES = [POSTERIOR, PREDICTIVE, *(deep[i] for i in (0, 1, 2, 4, 5, 8))]
-MUTED = ["#BC5A55", "#66909F", "#DBA3AD", "#BF6468", "#6B7883", "#9A7078", "#8795A2"]
+CYCLE = [CRIMSON, TEAL, *(COMBOS["seaborn_deep"][i] for i in (0, 1, 2, 4, 5, 8))]
 HEAT = LinearSegmentedColormap.from_list(
     "heat", ["#E2E6BD", "#F1DE81", "#F6C971", "#EEAB65", "#DA8459", "#B9534C", "#8E063B"])
-DIVERGING = LinearSegmentedColormap.from_list("diverging", [PREDICTIVE, "white", POSTERIOR])
-PURPLE_TEAL = ["#9671bd", "#7e7e7e", "#77b5b6"]
+DIVERGING = LinearSegmentedColormap.from_list("diverging", [TEAL, "white", CRIMSON])
 # holds the lowest tenth flat so a surface's floor reads as one colour and only the peaks glow
 SUNSET = LinearSegmentedColormap.from_list("sunset", list(zip(
     [0, 0.1, 0.28, 0.46, 0.64, 0.82, 1], ["#2d0b4e", "#2d0b4e", "#a11477", "#c1246b", "#e13661", "#fd4c55", "#ff6f4b"])))
 NIGHT = {"centre": "#12302f", "edge": "#071414", "ink": "#f2f2f0", "grid": "#2c4a48"}
+def tint(colour):
+    return LinearSegmentedColormap.from_list(str(colour), ["white", colour, "black"]), 0.9, 0.2
+
+
 # pairs each colormap with the stretch (dark end, light end) that still reads as a line on white
 STRETCH = {
     "Blues": (1.0, 0.35), "viridis": (0.0, 0.95), "magma": (0.15, 0.85), "plasma": (0.0, 0.9), "cividis": (0.0, 0.95),
     "rocket": (0.15, 0.85), "mako": (0.15, 0.85), "flare": (1.0, 0.0), "crest": (1.0, 0.0), "YlGnBu": (1.0, 0.3),
 }
-RAMPS = {"heat": (HEAT, 1.0, 0.4), "sunset": (SUNSET, 0.0, 1.0)} | {name.lower(): (plt.get_cmap(name), *ends) for name, ends in STRETCH.items()}
+RAMPS = {"crimson": tint(CRIMSON), "teal": tint(TEAL), "heat": (HEAT, 1.0, 0.4), "sunset": (SUNSET, 0.0, 1.0)} | {name.lower(): (plt.get_cmap(name), *ends) for name, ends in STRETCH.items()}
 TEXT_WIDTH = 6.5
 SPINE_OFFSET = 5
 NARROW = 1.4
@@ -47,7 +50,7 @@ ROOMY = 5.0
 ACROSS = 3
 
 
-def use(tex=None, font_size=10, series=SERIES, font="serif", dark=False):
+def use(tex=None, font_size=10, series=CYCLE, font="serif", dark=False):
     if tex is None:
         tex = font == "serif" and shutil.which("latex") is not None
     sns.set_style("ticks")
@@ -58,7 +61,7 @@ def use(tex=None, font_size=10, series=SERIES, font="serif", dark=False):
             "grid.color": NIGHT["grid"]})
     plt.rcParams.update({
         "text.usetex": tex,
-        "axes.prop_cycle": plt.cycler(color=series),
+        "axes.prop_cycle": plt.cycler(color=COMBOS[series] if isinstance(series, str) else series),
         "font.family": {"mono": "monospace"}.get(font, font),
         "font.monospace": ["Courier New", "Courier", "Computer Modern Typewriter"],
         "font.serif": ["CMU Serif", "Latin Modern Roman", "DejaVu Serif"],
@@ -139,7 +142,7 @@ def shades(name):
     if isinstance(name, str) and name in RAMPS:
         return RAMPS[name]
     if is_color_like(name):
-        return LinearSegmentedColormap.from_list("", ["white", name, "black"]), 0.9, 0.2
+        return tint(name)
     if isinstance(name, str):
         name = COMBOS[name]
     ends = (0.0, 1.0) if luma(name[0]) < luma(name[-1]) else (1.0, 0.0)
@@ -195,7 +198,7 @@ def quantiles(samples, level=0.95):
     return np.nanquantile(samples, [tail, 0.5, 1 - tail], axis=0)
 
 
-def band(ax, x, samples, level=0.95, color=POSTERIOR, alpha=0.5, **kw):
+def band(ax, x, samples, level=0.95, color=CRIMSON, alpha=0.5, **kw):
     lo, _, hi = quantiles(samples, level)
     return ax.fill_between(x, lo, hi, color=color, alpha=alpha, **kw)
 
@@ -234,7 +237,7 @@ def marks(ax, x, y, **kw):
     return ax.plot(x, y, **{"ls": "", "marker": "_", "ms": 16, "mew": 1, "color": TRUE, "zorder": 3, **kw})
 
 
-def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=None, level=None, gradient=False, **kw):
+def paths(ax, x, samples, color=TEAL, alpha=None, draws=None, level=None, gradient=False, **kw):
     samples = np.asarray(samples)
     # thins the draws and their lines in a small panel, where a hundred merge into one smear
     room = np.clip(ax.get_position().width * ax.figure.get_figwidth() / ROOMY, 0.25, 1)
@@ -324,7 +327,7 @@ def grid(ax):
     ax.set_axisbelow(True)
 
 
-def signal(ax, x, y, color=SERIES[2], **kw):
+def signal(ax, x, y, color="C2", **kw):
     return ax.plot(x, y, color=color, ls=(0, (3, 3)), lw=0.3, **kw)
 
 

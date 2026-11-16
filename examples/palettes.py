@@ -1,4 +1,4 @@
-"""Shows every sequential ramp and the two colour sets on the same decaying curves."""
+"""Shows every sequential ramp on the same decaying curves."""
 from pathlib import Path
 
 import numpy as np
@@ -7,7 +7,7 @@ import labfigs as lf
 
 x = np.linspace(0, 1, 200)
 lf.use()
-palettes = {name: lf.ramp(6, name) for name in lf.RAMPS} | {"muted": lf.MUTED, "purple_teal": lf.PURPLE_TEAL}
+palettes = {name: lf.ramp(6, name) for name in lf.RAMPS}
 fig, axes = lf.subplots(2, 7, width=13, aspect=0.75, sharex=True, sharey=True)
 for ax, (name, colors) in zip(axes.flat, palettes.items()):
     for rate, color in enumerate(colors, start=1):

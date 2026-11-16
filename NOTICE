@@ -1,10 +1,10 @@
 labfigs includes or adapts material from the projects below. Their licence texts follow.
 
 1. Andrey Churkin, BeautifulFigures (https://github.com/AndreyChurkin/BeautifulFigures), MIT:
-   the design checklist, fine grid, purple-teal set, sunset ramp, dark page and example layouts.
+   the design checklist, fine grid, sunset ramp, dark page and example layouts.
 2. Matt DesLauriers, dictionary-of-colour-combinations
    (https://github.com/mattdesl/dictionary-of-colour-combinations), MIT:
-   the 348 numbered combinations in labfigs_combos.py, after Sanzo Wada.
+   the 348 numbered combinations in labfigs_combos.py, after Sanzo Wada, kept as a backup.
 3. ColorSchemes.jl (https://github.com/JuliaGraphics/ColorSchemes.jl), MIT:
    the named schemes in labfigs_combos.py. Its licence file below also covers the schemes it
    carries from matplotlib, ColorBrewer (Apache 2.0, colours by Cynthia Brewer,
@@ -15,7 +15,12 @@ labfigs includes or adapts material from the projects below. Their licence texts
    cork, berlin, tofino, vikO, brocO and corkO, via ColorSchemes.jl. Papers that use them
    should cite Crameri, F. (2018), Scientific colour maps, Zenodo.
 5. Paul Tol, colour schemes (https://sronpersonalpages.nl/~pault/), BSD 3-Clause:
-   tol_bright and tol_muted, via ColorSchemes.jl.
+   tol_bright, tol_muted and tol_medcontrast, via ColorSchemes.jl.
+6. Michael L. Waskom, seaborn (https://github.com/mwaskom/seaborn), BSD 3-Clause:
+   seaborn_deep, via ColorSchemes.jl. The default colour cycle takes six of its colours.
+7. Blake R. Mills, MetBrewer (https://github.com/BlakeRMills/MetBrewer), CC0 1.0 Universal
+   (public domain dedication, https://creativecommons.org/publicdomain/zero/1.0/):
+   Klimt, Thomas, Tiepolo, Hokusai1, Derain and Kandinsky, via ColorSchemes.jl.
 
 The house style follows the figures of Kairui Hao's thesis; no material from it is included.
 
@@ -213,6 +218,37 @@ modification, are permitted provided that the following conditions are met:
 3. Neither the name of the copyright holder nor the names of its
    contributors may be used to endorse or promote products derived from
    this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+================================ 6. seaborn ================================
+
+Copyright (c) 2012-2020, Michael L. Waskom
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the project nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE

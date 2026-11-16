@@ -20,7 +20,7 @@ cases = (
 )
 fig, axes = lf.subplots(1, 3, aspect=1.45, sharey=True)
 for ax, letter, (color, outer, inner, centre, reach, point) in zip(axes, "abc", cases):
-    shades = lf.ramp(len(limits), (lf.POSTERIOR, color))
+    shades = lf.ramp(len(limits), (lf.CRIMSON, color))
     lf.region(ax, outer, color, dashed=True, label="Perfect coordination")
     free = lf.region(ax, inner, color, label="No coordination")
     unbalance = np.hypot(p - centre[0], (q - centre[1]) / 1.2) / reach

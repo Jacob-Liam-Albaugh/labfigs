@@ -76,8 +76,8 @@ rows = (
 fig, axes = lf.subplots(4, 2, aspect=0.36, sharey="row")
 for (wide, detail), (name, envelope, noise, tick, (lo, hi)) in zip(axes, rows):
     draws, measured = sweep(t, envelope, noise)
-    compare(wide, t, draws, measured, slice(None), "NSVI posterior", lf.POSTERIOR)
-    compare(detail, t, draws, measured, (t >= lo) & (t <= hi), "NSVI posterior", lf.POSTERIOR)
+    compare(wide, t, draws, measured, slice(None), "NSVI posterior", lf.CRIMSON)
+    compare(detail, t, draws, measured, (t >= lo) & (t <= hi), "NSVI posterior", lf.CRIMSON)
     wide.set(xticks=np.arange(0, 91, 30), yticks=[-tick, 0, tick], ylabel=name)
     detail.set(xticks=np.arange(lo, hi + 1, 2))
 fig.supxlabel("$t$ (s)")
@@ -102,7 +102,7 @@ for pair, (x_name, a_name, envelope, x_tick, a_tick) in zip(axes, rows):
             measured = 1.2 * clean + 0.03 * tick * rng.normal(size=t.size)
         else:
             draws, measured = sweep(t, 1.1 * tick * envelope**power, 0.05)
-        compare(ax, t, draws, measured, slice(None), "NSVI posterior predictive", lf.POSTERIOR)
+        compare(ax, t, draws, measured, slice(None), "NSVI posterior predictive", lf.CRIMSON)
         ax.set(xticks=np.arange(20, 101, 20), yticks=[-tick, 0, tick], ylabel=name)
 fig.supxlabel("$t$ (s)")
 lf.legend_above(fig)

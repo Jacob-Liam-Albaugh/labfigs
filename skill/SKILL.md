@@ -112,25 +112,29 @@ What `lf.subplots` and `lf.save` do without being asked, so a script does not:
 Looks, all set in the one `lf.use` call: `use(font="mono")` sets every label in Courier
 (Churkin's look; LaTeX is off, so write plain-text labels), `use(dark=True)` gives a dark
 teal page with a soft glow and light ink (slides and posters, not papers),
-`use(series=lf.PURPLE_TEAL)` or `use(series=lf.MUTED)` swaps the colour cycle.
+`use(series="tol_muted")` swaps the colour cycle for a named series scheme.
 
 ## Colours
 
 | Name | Use |
 |---|---|
-| `lf.POSTERIOR` | our method's posterior, bands and fills |
-| `lf.PREDICTIVE` | forecast and posterior-predictive draws |
+| `lf.CRIMSON` | first of the house pair: our method's posterior, bands and fills |
+| `lf.TEAL` | second of the house pair: forecast and posterior-predictive draws |
 | `lf.REFERENCE` | the baseline method being compared against (grey) |
 | `lf.TRUE` | ground truth, always drawn last so it sits on top |
 
+`"crimson"` and `"teal"` are also plain colour names (`color="teal"` is the house teal, not
+matplotlib's darker one) and sequential ramps, white through the colour to black:
+`lf.ramp(n, "teal")`, `gradient="crimson"`, `ramp="teal"`.
+
 Several series (methods, a sweep over a parameter): use the default colour cycle, `"C0"`,
-`"C1"`, ... It runs crimson, teal, then muted blue, orange, green, purple, brown, olive (seaborn's
-`deep` set, nothing neon), so the first two series always match Fig. 3.11. Give one method the same `"Cn"` in every figure of
+`"C1"`, ... It runs crimson, teal, then muted blue, orange, green, purple, brown, olive (the
+`"seaborn_deep"` scheme, nothing neon), so the first two series always match Fig. 3.11. Give one method the same `"Cn"` in every figure of
 a report. Do not pick colours by hand.
 
 An ordered sweep (pressure, noise level, step count) is not a set of methods: colour it with
 `lf.ramp(n, name)`, which returns `n` colours from dark to light. Ramps: `"heat"` (maroon to
-sand, the default), `"blues"` and `"ylgnbu"` (ColorBrewer), `"viridis"`, `"magma"`, `"plasma"`, `"cividis"`
+sand, the default), `"crimson"`, `"teal"`, `"blues"` and `"ylgnbu"` (ColorBrewer), `"viridis"`, `"magma"`, `"plasma"`, `"cividis"`
 (colour-blind safe), `"rocket"`, `"mako"`, `"flare"`, `"crest"`. Each stops before its pale
 end so thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`. Any colour works in
 place of a ramp name and gives shades of that colour (`lf.ramp(n, "C1")`,
@@ -149,14 +153,18 @@ and `vmax` one period apart. Panels that
 are compared against each other share `vmin` and `vmax`. Set `aspect="equal"` on the axes
 when x and y are the same physical quantity. Overlay sensors with `lf.data`.
 
-`lf.MUTED` is a softer seven-colour set (brick red, steel teal, dusty pink, rose, slate,
-mauve, blue-grey), via `lf.use(series=lf.MUTED)`. Its first two are the house pair with the
-saturation turned down: opposite hues that still sit quietly side by side. The other five
-are close in hue, so use them for light/dark variants of one method, not for telling
-methods apart.
+Another set of series colours is one word: `lf.use(series="tol_muted")`, then `"C0"`,
+`"C1"`, ... The series schemes, listed in `lf.KINDS["categorical"]`:
 
-`lf.PURPLE_TEAL` is Churkin's three-colour set: purple, grey, teal. `"C0"` and `"C2"` are two
-data subsets and `"C1"` is the neutral for trend lines, via `lf.use(series=lf.PURPLE_TEAL)`.
+- `"seaborn_deep"` (ten colours): the source of the default cycle.
+- `"tol_bright"` (seven), `"tol_muted"` (nine), `"tol_medcontrast"` (six, as three
+  light and dark pairs): Paul Tol's sets, for a figure that must survive colour-blind reading.
+- `"Klimt"` (six), `"Thomas"` (eight), `"Tiepolo"` (eight), `"Hokusai1"` (seven),
+  `"Derain"` (seven): painters' palettes, muted, with hues all round the wheel.
+- `"Kandinsky"` (four: teal, ochre, grey, near-black): `"C0"` and `"C1"` are two data
+  subsets and `"C2"` is the neutral for trend lines (Churkin's layout).
+
+Keep the palest colours of a scheme for fills and thick lines.
 `lf.points` gives each marker an edge in a darker shade of its fill (`lf.darker(color)`).
 The `"sunset"` ramp (deep purple to orange) holds its lowest tenth at one colour, so a
 surface's floor stays flat and only the peaks glow. Under `use(dark=True)`, `heatmap` and
@@ -172,7 +180,6 @@ steps for ordered sweeps. Grey is free and goes with anything.
 
 `lf.COMBOS` is the library to pull from, so no script needs a hex colour:
 
-- `lf.COMBOS[120]`: Sanzo Wada's 348 combinations by number, two to four colours each.
 - `lf.COMBOS["devon"]`: 46 sequential ColorSchemes.jl schemes by name (`"amp"`, `"oslo"`,
   `"acton"`, `"navia"`, `"grayC"` for a neutral grey, ...), up to nine stops in the source's
   order. These are ramps for ordered data, not series colours. A name works wherever a ramp
@@ -181,19 +188,19 @@ steps for ordered sweeps. Grey is free and goes with anything.
   for the scheme.
 - The other kinds, listed in `lf.KINDS`: `"diverging"` (`"vik"`, `"broc"`, `"cork"`,
   `"BrBG"`, `"PRGn"`, `"berlin"`, `"tofino"`; for `heatmap(center=)`), `"cyclic"` (`"vikO"`,
-  `"brocO"`, `"corkO"`; for angles) and `"categorical"` (Paul Tol's colour-blind-safe sets
-  `"tol_bright"`, seven colours, and `"tol_muted"`, nine; for
-  `lf.use(series=lf.COMBOS["tol_muted"])` when a figure must survive colour-blind reading).
-  Keep the sand and pale blue of the Tol sets for fills and thick lines. Every one of these
-  has vividness at most 0.6; `examples/schemes.svg` shows them.
+  `"brocO"`, `"corkO"`; for angles) and `"categorical"` (the ten series schemes above, for
+  `lf.use(series=name)`). Every one of these has vividness at most 0.6;
+  `examples/schemes.svg` shows them.
+- Backup: `lf.COMBOS[120]`, Sanzo Wada's 348 combinations by number, two to four colours
+  each. Reach for one only when no named scheme fits.
 - `lf.combos(size=None, vivid=1.0, arc=(0, 360), kind=None)`: the combinations of `size`
   colours whose most vivid colour is at most `vivid` and whose hues span between `arc[0]`
   and `arc[1]` degrees (greys and near-blacks count as neutral), of one `kind`
   (`"combination"` for Wada's, `"sequential"`, `"diverging"`, `"cyclic"`, `"categorical"`).
-  `lf.combos(2, vivid=0.5, arc=(120, 360))` is the muted complementary pairs;
-  `examples/combos.svg` shows the combinations and ramps under 0.5.
+  `lf.combos(kind="categorical")` is the series schemes;
+  `examples/colours.svg` shows every scheme by kind, with Wada's last.
 
-Use them through the calls that already exist: `lf.use(series=lf.COMBOS[44])` then `"C0"`,
+Use them through the calls that already exist: `lf.use(series="Klimt")` then `"C0"`,
 `"C1"`; `lf.ramp(n, lf.COMBOS["devon"])` for `n` shades, dark first; `ramp=lf.COMBOS["amp"]`
 in `heatmap` and `surface`, `gradient=lf.COMBOS["amp"]` in `paths`. When the choice is open,
 draw the candidates with `lf.swatches(ax, sets)` (a dict of label to colours) and look
@@ -295,8 +302,8 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
    for a different shape. If tick labels of neighbouring panels touch, cap them
    (`ax.locator_params(nbins=4)`).
 5. Colour. Posterior against predictive keeps the house crimson then teal. Other series
-   take clearly different hues at moderate saturation (`lf.MUTED`, or a set from
-   `lf.combos(n, vivid=0.5)`); an ordered sweep takes shades of one hue (`lf.ramp(n, colour)`).
+   take clearly different hues at moderate saturation (a series scheme:
+   `lf.use(series="tol_muted")`); an ordered sweep takes shades of one hue (`lf.ramp(n, colour)`).
    Grey for context and trend lines. Nothing neon.
 6. Weight. Markers and lines must read at print size: `lf.points` and the default widths
    are sized for that. Stress a series with weight or a dash pattern before a new colour.
@@ -430,8 +437,7 @@ Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
 `examples/feasible_regions.py` draws feasible regions with nested limit contours, a level
 key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an edged scatter
 with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
-`examples/combos.py` draws the muted combinations in `lf.COMBOS` as labelled swatches, and
-`examples/schemes.py` its diverging, cyclic and categorical schemes, each in use.
+`examples/schemes.py` draws the diverging, cyclic and series schemes, each in use.
 `examples/colours.svg` shows every colour option with its name: open it to pick one by eye.
 `examples/defaults.py` shows what needs no code: dodged intervals with true-value marks on a
 log and a categorical axis, a case tag, a `%` label, fitted ticks and a warning from `lf.save`.

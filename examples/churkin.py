@@ -11,15 +11,15 @@ iris = load_iris()
 keep = iris.target != 1
 length, width, species = iris.data[keep, 0], iris.data[keep, 1], iris.target[keep]
 
-lf.use(font="mono", series=lf.PURPLE_TEAL)
+lf.use(font="mono", series="Kandinsky")
 fig, ax = lf.subplots(width=3.4, aspect=1)
-for kind, color in ((0, "C0"), (2, "C2")):
+for kind, color in ((0, "C0"), (2, "C1")):
     lf.points(ax, length[species == kind], width[species == kind], color=color, label=iris.target_names[kind].title())
 span = np.linspace(3.9, 8.3, 100)
 for kind in (0, 2):
     for degree, style, label in ((1, "-", "LR"), (2, "--", "PR")):
         fit = np.polyfit(length[species == kind], width[species == kind], degree)
-        ax.plot(span, np.polyval(fit, span), color="C1", lw=1.3, ls=style, label=label)
+        ax.plot(span, np.polyval(fit, span), color="C2", lw=1.3, ls=style, label=label)
 lf.grid(ax)
 ax.set(aspect="equal", xlim=(3.9, 8.3), ylim=(1.2, 5.6), xticks=range(4, 9), yticks=range(2, 6))
 ax.set(xlabel="Sepal length (cm)", ylabel="Sepal width (cm)")

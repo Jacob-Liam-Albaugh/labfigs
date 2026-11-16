@@ -45,7 +45,7 @@ This writes `out/first.svg`. Figures are vector only; pass `formats=("svg", "pdf
 
 - Call `lf.use()` once, before any figure. Do not set fonts, sizes or `rcParams` yourself.
 - Make figures with `lf.subplots` and finish them with `lf.save`.
-- Use the named colours (`lf.POSTERIOR`, `lf.PREDICTIVE`, `lf.REFERENCE`, `lf.TRUE`), the cycle (`"C0"`, `"C1"`, ...) for methods, and `lf.ramp(n, name)` for ordered sweeps. No hex colours in scripts.
+- Use the house pair (`lf.CRIMSON`, then `lf.TEAL`), `lf.REFERENCE` and `lf.TRUE`, the cycle (`"C0"`, `"C1"`, ...) for methods, and `lf.ramp(n, name)` for ordered sweeps. `lf.use(series="tol_muted")` swaps the cycle for a named scheme. No hex colours in scripts.
 - If a figure needs something the library lacks, add a helper to `labfigs.py` instead of writing it in your script.
 
 The full list of helpers, options and conventions is in [skill/SKILL.md](skill/SKILL.md).
@@ -78,7 +78,7 @@ The eight design steps from the matplotlib default to the finished figure (`desi
 
 ![Design steps](examples/design_steps.svg)
 
-The rest are in [examples/](examples): [gradient draws](examples/gradient_draws.svg), [ramps as line sweeps](examples/palettes.svg), [parameter intervals](examples/intervals.svg), [densities](examples/densities.svg), [shaded panels](examples/shaded_panels.svg), [convergence traces](examples/convergence.svg), three of Hao's figures remade with labfigs ([6.3](examples/fig_6_3.svg) of the [thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [14](examples/fig_14.svg) and [16](examples/fig_16.svg) of the [filter paper](https://arxiv.org/abs/2407.16502)), an [edged scatter](examples/edged_scatter.svg) after Churkin's [main example](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/01_main_simple_example) the [muted colour combinations](examples/combos.svg) in `lf.COMBOS`, its [diverging, cyclic and colour-blind-safe schemes](examples/schemes.svg) and [every colour option by name](examples/colours.svg).
+The rest are in [examples/](examples): [gradient draws](examples/gradient_draws.svg), [ramps as line sweeps](examples/palettes.svg), [parameter intervals](examples/intervals.svg), [densities](examples/densities.svg), [shaded panels](examples/shaded_panels.svg), [convergence traces](examples/convergence.svg), three of Hao's figures remade with labfigs ([6.3](examples/fig_6_3.svg) of the [thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [14](examples/fig_14.svg) and [16](examples/fig_16.svg) of the [filter paper](https://arxiv.org/abs/2407.16502)), an [edged scatter](examples/edged_scatter.svg) after Churkin's [main example](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/01_main_simple_example), the [diverging, cyclic and series schemes](examples/schemes.svg) and [every colour option by name](examples/colours.svg).
 
 ## Design checklist
 
@@ -88,7 +88,7 @@ Before a figure goes into a paper:
 - Set `lf.subplots(width=)` to the printed width and include the figure unscaled, so the text prints at body-text size. No text below about 8 pt.
 - Check it in the compiled manuscript at 100%: font size against the caption, line weights, marker sizes, legend.
 - Design in black, grey and line styles first, then add one or two colours. Keep one colour per data subset across every figure.
-- No neon. Complementary colours are fine at moderate saturation (`lf.combos(2, vivid=0.5)`); colours that must be told apart differ in hue, not only in lightness.
+- No neon. Complementary colours are fine at moderate saturation (every series scheme in `lf.KINDS["categorical"]` is); colours that must be told apart differ in hue, not only in lightness.
 - Fade the mass of lines to grey and colour only the few that matter.
 - Use a ramp for ordered data, never a rainbow. Red reads as wrong and green as right.
 - Put the legend at the top, and write a caption that says what to see.
@@ -101,10 +101,12 @@ The full checklist is in [skill/SKILL.md](skill/SKILL.md).
 ## References
 
 - Kairui Hao, *Information Field Theory Approach to Uncertainty Quantification for Differential Equations: Theory, Algorithms and Applications*, PhD thesis, Purdue University ([Purdue Hammer](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [ProQuest](https://www.proquest.com/docview/3235007366)), and his [filter paper](https://arxiv.org/abs/2407.16502): the source of the house style (colours, trimmed spines, legend above).
-- Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`), the feasible-region example layout, the purple-teal set, the sunset ramp, the dark page, edged markers (`lf.points`) and the 3D surface (`lf.surface`). His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
-- Sanzo Wada, *A Dictionary of Color Combinations*, browsed at [colors.elwyn.co](https://colors.elwyn.co) and taken from Matt DesLauriers' [dataset](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT): the 348 numbered combinations in `lf.COMBOS`.
-- [ColorSchemes.jl](https://github.com/JuliaGraphics/ColorSchemes.jl) (MIT), as listed in the [Plots.jl docs](https://docs.juliaplots.org/stable/generated/colorschemes/): the named schemes in `lf.COMBOS` (sequential, diverging, cyclic), among them Fabio Crameri's [Scientific colour maps](https://doi.org/10.5281/zenodo.1243862) (MIT), cmocean (MIT) and ColorBrewer (Apache 2.0).
-- Paul Tol, [colour schemes](https://sronpersonalpages.nl/~pault/) (BSD 3-Clause): the colour-blind-safe series sets `tol_bright` and `tol_muted`.
+- Andrey Churkin, [BeautifulFigures](https://github.com/AndreyChurkin/BeautifulFigures/) (MIT): the source of the design checklist, the fine grid (`lf.grid`), the feasible-region example layout, the sunset ramp, the dark page, edged markers (`lf.points`) and the 3D surface (`lf.surface`). His two tutorials cover the [principles](https://youtu.be/i-HAjex6VtM) and the [whole process](https://youtu.be/KQ6Zg9B5Mxs), from plotting code to the manuscript page.
+- [ColorSchemes.jl](https://github.com/JuliaGraphics/ColorSchemes.jl) (MIT), as listed in the [Plots.jl docs](https://docs.juliaplots.org/stable/generated/colorschemes/): the named schemes in `lf.COMBOS` (sequential, diverging, cyclic, series), among them Fabio Crameri's [Scientific colour maps](https://doi.org/10.5281/zenodo.1243862) (MIT), cmocean (MIT) and ColorBrewer (Apache 2.0).
+- Paul Tol, [colour schemes](https://sronpersonalpages.nl/~pault/) (BSD 3-Clause): the colour-blind-safe series schemes `tol_bright`, `tol_muted` and `tol_medcontrast`.
+- Michael Waskom, [seaborn](https://seaborn.pydata.org) (BSD 3-Clause): the `seaborn_deep` series scheme, which the default cycle continues with after crimson and teal.
+- Blake R. Mills, [MetBrewer](https://github.com/BlakeRMills/MetBrewer) (CC0): the series schemes `Klimt`, `Thomas`, `Tiepolo`, `Hokusai1`, `Derain` and `Kandinsky`.
+- Sanzo Wada, *A Dictionary of Color Combinations*, browsed at [colors.elwyn.co](https://colors.elwyn.co) and taken from Matt DesLauriers' [dataset](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT): the 348 numbered combinations kept in `lf.COMBOS` as a backup.
 
 ## Licence
 

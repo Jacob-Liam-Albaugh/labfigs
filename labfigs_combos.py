@@ -1,4 +1,4 @@
-"""Colour combinations to pull from: Sanzo Wada's 348 (by number) and ColorSchemes.jl schemes (by name)."""
+"""Colour schemes from ColorSchemes.jl (by name), with Sanzo Wada's 348 combinations (by number) as a backup."""
 
 COMBOS = {
     1: ["#d96629", "#0093a5"],
@@ -407,11 +407,19 @@ COMBOS = {
     "corkO": ["#3f3e3a", "#3e3f52", "#45567a", "#5f7a9f", "#849eba", "#a7bec8", "#afcbbc", "#96be99", "#71a16c", "#547d44", "#465d2e", "#41482f", "#3f3e3a"],
     "tol_bright": ["#4477aa", "#ee6677", "#228833", "#ccbb44", "#66ccee", "#aa3377", "#bbbbbb"],
     "tol_muted": ["#332288", "#88ccee", "#44aa99", "#117733", "#999933", "#ddcc77", "#cc6677", "#882255", "#aa4499"],
+    "tol_medcontrast": ["#6699cc", "#004488", "#eecc66", "#994455", "#997700", "#ee99aa"],
+    "seaborn_deep": ["#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b3", "#937860", "#da8bc3", "#8c8c8c", "#ccb974", "#64b5cd"],
+    "Klimt": ["#df9ed4", "#c93f55", "#eacc62", "#469d76", "#3c4b99", "#924099"],
+    "Thomas": ["#b24422", "#c44d76", "#4457a5", "#13315f", "#b1a1cc", "#59386c", "#447861", "#7caf5c"],
+    "Tiepolo": ["#802417", "#c06636", "#ce9344", "#e8b960", "#646e3b", "#2b5851", "#508ea2", "#17486f"],
+    "Hokusai1": ["#6d2f20", "#b75347", "#df7e66", "#e09351", "#edc775", "#94b594", "#224b5e"],
+    "Derain": ["#efc86e", "#97c684", "#6f9969", "#aab5d5", "#808fe1", "#5c66a8", "#454a74"],
+    "Kandinsky": ["#3b7c70", "#ce9642", "#898e9f", "#3b3a3e"],
 }
 
 # lists the named schemes that are not dark-to-light ramps; every other name is sequential
 KINDS = {
     "diverging": ["vik", "broc", "cork", "BrBG", "PRGn", "berlin", "tofino"],
     "cyclic": ["vikO", "brocO", "corkO"],
-    "categorical": ["tol_bright", "tol_muted"],
+    "categorical": ["seaborn_deep", "tol_bright", "tol_muted", "tol_medcontrast", "Klimt", "Thomas", "Tiepolo", "Hokusai1", "Derain", "Kandinsky"],
 }

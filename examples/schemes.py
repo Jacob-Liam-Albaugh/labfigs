@@ -7,7 +7,7 @@ import labfigs as lf
 
 out = Path(__file__).parent
 kinds = {kind: lf.combos(kind=kind) for kind in lf.KINDS}
-lf.use(series=lf.COMBOS["tol_muted"])
+lf.use(series="tol_muted")
 
 fig, (top, bottom) = lf.subplots(2, 3, width=10, aspect=0.8)
 for ax, (kind, sets) in zip(top, kinds.items()):

@@ -14,7 +14,7 @@ k = np.arange(1, 6)[None, :, None]
 waves = rng.normal(size=(2000, 5, 1)) / k * np.sin(np.pi * k * x + rng.uniform(0, 2 * np.pi, (2000, 5, 1)))
 draws = np.sin(2 * np.pi * x) + 0.35 * waves.sum(1)
 fig, axes = lf.subplots(4, 4, width=10.4, aspect=0.75, sharex=True, sharey=True)
-for ax, gradient in zip(axes.flat, (False, *lf.RAMPS, lf.POSTERIOR, lf.PREDICTIVE, "tab:blue")):
+for ax, gradient in zip(axes.flat, (False, *lf.RAMPS, "tab:blue")):
     lf.paths(ax, x, draws, gradient=gradient, label="Posterior draws")
     ax.plot(x, np.sin(2 * np.pi * x), color=lf.TRUE, ls="--", label="True")
     ax.set(title=f"gradient={gradient}", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
@@ -28,6 +28,8 @@ X, Y = np.meshgrid(np.linspace(0, 1, 80), np.linspace(0, 1, 80))
 R = np.hypot(X - 0.5, Y - 0.5)
 waves = sum(np.cos(2 * np.pi * (a * X + b * Y) + c) for a, b, c in rng.uniform(-2, 2, (6, 3)))
 fields = [
+    np.exp(-((X - 0.5) ** 2 / 0.08 + (Y - 0.5) ** 2 / 0.015)),
+    np.sin(np.pi * X) * Y ** 2,
     np.exp(-((X - 0.3) ** 2 + (Y - 0.6) ** 2) / 0.03) + 0.6 * np.exp(-((X - 0.7) ** 2 + (Y - 0.3) ** 2) / 0.05),
     np.exp(-R ** 2 / 0.02),
     np.exp(-(X - Y) ** 2 / 0.02),
