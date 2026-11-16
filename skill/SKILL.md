@@ -45,6 +45,8 @@ lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per 
 lf.data(ax, x, y, label="Sensors")        # black measurement dots
 lf.trace(ax, x, y, label="76 Torr")       # dots joined by a line (convergence, sweeps)
 lf.intervals(ax, x, lo, mid, hi, shift=dx)  # dot with a vertical 95% bar per x
+lf.marks(ax, x, truth, label="True")      # short black bar at the true value of each x, over the intervals
+lf.tag(fig, "Case 3")                     # names the case top-left, when there is one figure per case
 lf.legend_above(axes[0])                  # one-row legend above the top panel
 lf.legend_above(fig)                      # same, for a grid: labels deduplicated over all panels
 lf.legend_above(fig, ncols=3)             # wrap a long legend (five or more entries) onto two rows
@@ -65,17 +67,33 @@ lf.grid(ax)                               # fine major and minor grid for readin
 lf.points(ax, x, y, color="C0", label="Setosa")  # scatter markers with a darker edge of their own hue, drawn above lines
 fig, ax = lf.subplots(aspect=0.75, subplot_kw={"projection": "3d"})
 lf.surface(ax, x, y, z, ramp="sunset", label="Price")  # 3D surface with its colourbar; x, y, z are 2D grids
-lf.save(fig, "out/name")                  # trims spines, writes name.svg
+lf.save(fig, "out/name")                  # fits ticks to the data, trims spines, writes name.svg, warns on checklist 6 and 13
 ```
 
 `lf.quantiles(samples)` returns `(lo, median, hi)`, ready to unpack into `ribbon` or
-`intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position;
-`intervals(connect=True)` joins the dots.
+`intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position.
+Shifts are in points (5 pt apart; `lf.dodge(n, 8)` for more), so the same call works on a
+categorical, a numeric and a log axis. `intervals(connect=True)` joins the dots. `trace`
+takes any `ax.plot` option (`ls="--"`, `marker="s"`).
 
 Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=None, gradient=False | True | colour | ramp name)`,
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
-spines (log axes), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
+spines (a grid), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
+
+What `lf.subplots` and `lf.save` do without being asked, so a script does not:
+
+- Panel shape. `aspect` defaults to 0.62 up to three columns and grows with the column
+  count past that, so panels in a wide grid do not go flat.
+- Ticks. Every linear axis whose ticks were left automatic gets ticks widened to the
+  nearest ones enclosing its data, at the step that fits the final panel size. The trimmed
+  spine then covers the data (to within 3% of its range). Axes with explicit ticks, log axes and heatmaps are
+  left alone.
+- Per cent. Write `%` plainly in any label (`"Error (%)"`); it is escaped for LaTeX, and
+  `\%` is unescaped when LaTeX is off.
+- Warnings. `lf.save` warns when a panel has under 1.4 in of page width, which is five
+  columns at text width (checklist 6), and when one x
+  position of an interval plot sits apart and sets the range (checklist 13).
 
 Looks, all set in the one `lf.use` call: `use(font="mono")` sets every label in Courier
 (Churkin's look; LaTeX is off, so write plain-text labels), `use(dark=True)` gives a dark
@@ -157,10 +175,12 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 ## Conventions
 
 - Axis labels are LaTeX math, normalised quantities written as `$x_1/\bar{x}_1$`.
-- Set ticks explicitly on axes with a natural range (`yticks=[-1, 0, 1]`); the spines are
-  trimmed to the outermost ticks, so ticks define the frame.
+- Spines are trimmed to the outermost ticks, so ticks define the frame. Leave them to
+  `lf.save`, with two exceptions: an axis with a natural range (`yticks=[-1, 0, 1]`) and a
+  log axis (`xticks=[1e-3, 1e-1, 1e1, 1e3]`), which both take explicit ticks.
 - One legend per figure, above the top panel. No figure title; the caption carries it. In a
-  grid, a column title names the case (`ax.set(title="76 Torr")` on the top row only).
+  grid, a column title names the case (`ax.set(title="76 Torr")` on the top row only). A
+  figure that shows one case of several names it with `lf.tag(fig, "76 Torr")`.
 - `band` (crimson, α 0.5) is for one posterior; `ribbon` is for several methods overlaid.
 - Band or draws. A band is the default for a posterior: a state over the observed window, a
   static field, a parameter over iterations. Draws (`paths`) are for a forecast or rollout
@@ -171,7 +191,8 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
   when asked. One form per distribution: fill reads as inferred, lines as simulated forward.
 - Draw order: band, sample paths, truth.
 - A true parameter value is a plain line: `ax.axhline(v, color=lf.TRUE, ls="--", label="True")`,
-  or `ax.axvline` on a density. A reference method's interval across a sweep is
+  or `ax.axvline` on a density. When the true value differs per x position (a case each),
+  it is `lf.marks(ax, x, truth, label="True")`. A reference method's interval across a sweep is
   `ax.axhspan(lo, hi, color=lf.REFERENCE, alpha=0.3, lw=0, label="NUTS")`.
 - A panel showing two named quantities gets two titles in their colours:
   `ax.set_title(a, loc="left", color="C1")` and `ax.set_title(b, loc="right", color="C0")`.
@@ -234,12 +255,14 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 | Regions in a plane | `region`, `contours`, `level_key` |
 
 1. Data. Plot only what supports the sentence; the rest goes to the text.
-2. Range. Set `xlim` and `ylim` around the data with an even margin, and explicit ticks.
+2. Range. Leave limits and ticks to `lf.save`, which frames the data. Set `xlim`, `ylim` or
+   ticks only to cut to the part that matters, for a natural range, or on a log axis.
 3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
    share a unit; otherwise trimmed spines and no grid. Panel height is panel width times
-   `aspect`, so past three columns raise `aspect` in step (`aspect=0.8 * ncols / 3`) and
-   cap the ticks (`ax.locator_params(nbins=4)`).
+   `aspect`; the default keeps panels in shape at any column count, so pass `aspect=` only
+   for a different shape. If tick labels of neighbouring panels touch, cap them
+   (`ax.locator_params(nbins=4)`).
 5. Colour. Posterior against predictive keeps the house crimson then teal. Other series
    take clearly different hues at moderate saturation (`lf.MUTED`, or a set from
    `lf.combos(n, vivid=0.5)`); an ordered sweep takes shades of one hue (`lf.ramp(n, colour)`).
@@ -256,10 +279,24 @@ forecast, axis labels with units, no title.
 ### When the request goes against the guidelines
 
 The figure is the user's, so a poor request still gets its figure, exactly as asked. Check
-the request against the checklist before drawing and the rendered figure after it. For
-each conflict, report one line next to the figure: the checklist item, what the reader
-loses, and the alternative that complies. Put the same lines in the write-up when there is
-one. Offer the alternative; build it only when asked. No flag means the request passed.
+at three points:
+
+1. The set, before drawing. Read every request together: the same data asked for twice, a
+   figure per case for many cases, the number of panels one paragraph of text has to
+   carry, one colour per method across the figures, a caption for every figure.
+2. Each request, before drawing, against the table below.
+3. Each rendered figure, against the checklist. A warning from `lf.save` is a flag:
+   report it or remove its cause, never silence it.
+
+Report one line for the set and one line for every request, flagged or not, next to the
+figures and in the write-up when there is one:
+
+- Passed: the items checked. "`exp-alex`: items 1 to 6, 9 to 14 checked, pass."
+- Flagged: the item, what the reader loses, the alternative that complies.
+
+A request with no line was not checked. Offer the alternative; build it only when asked.
+One thing is added without asking: a figure that goes into a report gets a caption line
+saying what the line, the band and the markers are, and the level of the band.
 
 | Request | Item | Offer instead |
 |---|---|---|
@@ -363,6 +400,8 @@ Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
 key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an edged scatter
 with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
 `examples/combos.py` draws the muted combinations in `lf.COMBOS` as labelled swatches.
+`examples/defaults.py` shows what needs no code: dodged intervals with true-value marks on a
+log and a categorical axis, a case tag, a `%` label, fitted ticks and a warning from `lf.save`.
 
 ## Not covered yet
 

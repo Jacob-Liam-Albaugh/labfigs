@@ -1,15 +1,20 @@
+import re
 import shutil
+import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib.cm import ScalarMappable
-from matplotlib.collections import LineCollection
+from matplotlib.collections import LineCollection, QuadMesh
+from matplotlib.container import ErrorbarContainer
 from matplotlib.colors import LinearSegmentedColormap, Normalize, is_color_like, rgb_to_hsv, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import ConnectionPatch, Polygon
+from matplotlib.text import Text
+from matplotlib.ticker import FixedFormatter, MaxNLocator
 from matplotlib.transforms import offset_copy
 
 from labfigs_combos import COMBOS
@@ -37,6 +42,7 @@ STRETCH = {
 RAMPS = {"heat": (HEAT, 1.0, 0.4), "sunset": (SUNSET, 0.0, 1.0)} | {name.lower(): (plt.get_cmap(name), *ends) for name, ends in STRETCH.items()}
 TEXT_WIDTH = 6.5
 SPINE_OFFSET = 5
+NARROW = 1.4
 
 
 def use(tex=None, font_size=10, series=SERIES, font="serif", dark=False):
@@ -73,7 +79,9 @@ def use(tex=None, font_size=10, series=SERIES, font="serif", dark=False):
     })
 
 
-def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=0.62, n=None, **kw):
+def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=None, n=None, **kw):
+    # keeps panels from going flat as columns are added
+    aspect = aspect or 0.62 * max(ncols, 3) / 3
     figsize = (width, nrows * (width / ncols) * aspect)
     if n is None:
         fig, axes = plt.subplots(nrows, ncols, figsize=figsize, **kw)
@@ -180,23 +188,29 @@ def data(ax, x, y, **kw):
 
 
 def trace(ax, x, y, **kw):
-    return ax.plot(x, y, "o-", ms=3, **kw)[0]
+    return ax.plot(x, y, **{"marker": "o", "ms": 3, **kw})[0]
 
 
-def dodge(n, width=0.17):
+def dodge(n, width=5):
     return (np.arange(n) - (n - 1) / 2) * width
 
 
 def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
-    fmt = "o-" if connect else "o"
-    return ax.errorbar(np.asarray(x) + shift, mid, [mid - lo, hi - mid], fmt=fmt, ms=3, **kw)
+    # shifts in points, so one dodge works on any axis, numeric or log
+    bars = ax.errorbar(x, mid, [mid - lo, hi - mid], fmt="o-" if connect else "o", ms=3, **kw)
+    for artist in (bars[0], *bars[1], *bars[2]):
+        artist.set_transform(offset_copy(ax.transData, ax.figure, x=shift, units="points"))
+    return bars
+
+
+def marks(ax, x, y, **kw):
+    return ax.plot(x, y, **{"ls": "", "marker": "_", "ms": 16, "mew": 1, "color": TRUE, "zorder": 3, **kw})
 
 
 def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level=None, gradient=False, **kw):
     samples = np.asarray(samples)
     if level:
-        percent = r"\%" if plt.rcParams["text.usetex"] else "%"
-        band(ax, x, samples, level, color=REFERENCE, alpha=0.3, lw=0, label=f"{100 * level:g}{percent} interval")
+        band(ax, x, samples, level, color=REFERENCE, alpha=0.3, lw=0, label=f"{100 * level:g}% interval")
     keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
     if not gradient:
         return ax.plot(x, samples[keep].T, color=color, alpha=alpha or 0.1, **kw)
@@ -310,13 +324,76 @@ def legend_above(target, gap=0.18, ncols=None, **kw):
     )
 
 
+def tag(fig, text):
+    return fig.suptitle(text, x=0.01, ha="left", size=plt.rcParams["font.size"])
+
+
+def percent(text):
+    if plt.rcParams["text.usetex"]:
+        return re.sub(r"(?<!\\)%", r"\\%", text)
+    return "$".join(part if i % 2 else part.replace(r"\%", "%") for i, part in enumerate(text.split("$")))
+
+
+def loose(ax):
+    if ax.images or any(isinstance(c, QuadMesh) for c in ax.collections):
+        return []
+    axes = {name: getattr(ax, f"{name}axis") for name in "xy"}
+    return [name for name, axis in axes.items() if isinstance(axis.get_major_locator(), MaxNLocator) and axis.get_scale() == "linear"]
+
+
+def cover(ax):
+    for name in loose(ax):
+        axis = getattr(ax, f"{name}axis")
+        siblings = getattr(ax, f"get_shared_{name}_axes")().get_siblings(ax)
+        lo, hi = np.transpose([getattr(s, f"{name}axis").get_data_interval() for s in siblings])
+        lo, hi, view = lo.min(), hi.max(), axis.get_view_interval()
+        if not (np.isfinite([lo, hi]).all() and view[0] < view[1]):
+            continue
+        if not getattr(ax, f"get_autoscale{name}_on")():
+            lo, hi = view
+        step = np.diff(axis.get_major_locator().tick_values(*view))[0]
+        lo, hi = max(lo, view[0]) / step, min(hi, view[1]) / step
+        # lets data pass the last tick by a line width before adding a whole step for it
+        slack = 0.03 * (hi - lo)
+        axis.set_ticks(np.arange(np.floor(lo + slack), np.ceil(hi - slack) + 1) * step)
+
+
+def check(fig, name):
+    panels = [ax for ax in fig.axes if ax.get_label() != "<colorbar>" and ax.axison and ax.name == "rectilinear"]
+    spans = [ax.get_subplotspec() for ax in panels if ax.get_subplotspec() and len(ax.get_xticks())]
+    width = min((fig.get_figwidth() * len(s.colspan) / s.get_gridspec().ncols for s in spans), default=NARROW)
+    if width < NARROW:
+        warnings.warn(f"{name}: panels are {width:.1f} in wide (checklist 6): fewer columns, more rows, or a wider page", stacklevel=3)
+    for ax in panels:
+        bars = [np.array(c.lines[2][0].get_segments())[:, :, 1] for c in ax.containers if isinstance(c, ErrorbarContainer)]
+        if not bars or len({len(b) for b in bars}) > 1 or len(bars[0]) < 4 or ax.get_yscale() != "linear":
+            continue
+        ends = np.concatenate(bars, axis=1)
+        extreme = np.abs(ends.mean(1) - np.median(ends)).argmax()
+        apart, rest = ends[extreme], np.delete(ends, extreme, 0)
+        if (apart.min() > rest.max() or apart.max() < rest.min()) and np.ptp(rest) < np.ptp(ends) / 3:
+            warnings.warn(f"{name}: one x position sets the range of {ax.get_ylabel()!r} (checklist 13): "
+                          "a log axis, or that position in its own panel", stacklevel=3)
+
+
 def save(fig, path, trim=True, formats=("svg",)):
-    if trim:
-        for ax in fig.axes:
-            if ax.get_label() != "<colorbar>" and ax.name == "rectilinear" and ax.axison:
-                sns.despine(ax=ax, offset=SPINE_OFFSET, trim=True)
     path = Path(path)
+    for text in fig.findobj(Text):
+        text.set_text(percent(text.get_text()))
+    for ax in fig.axes:
+        for axis in (ax.xaxis, ax.yaxis):
+            if isinstance(axis.get_major_formatter(), FixedFormatter):
+                axis.get_major_formatter().seq = [percent(label) for label in axis.get_major_formatter().seq]
+    panels = [ax for ax in fig.axes if trim and ax.get_label() != "<colorbar>" and ax.name == "rectilinear" and ax.axison]
+    if any(loose(ax) for ax in panels):
+        # settles the layout first, so the tick count fits the final panel size
+        fig.draw_without_rendering()
+    for ax in panels:
+        # widens each automatic axis to the ticks enclosing its data, so a trimmed spine never stops short of it
+        cover(ax)
+        sns.despine(ax=ax, offset=SPINE_OFFSET, trim=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     for ext in formats:
         fig.savefig(path.with_suffix(f".{ext}"))
+    check(fig, path.name)
     return path
