@@ -35,7 +35,7 @@ samples = truth * np.random.default_rng(0).normal(1, 0.2, (500, 1))
 
 fig, ax = lf.subplots()
 lf.paths(ax, x, samples, label="Posterior draws")
-ax.plot(x, truth, color=lf.TRUE, ls="--", label="True")
+lf.truth(ax, x, truth)
 ax.set(xlabel="$x$", ylabel="$u$", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
 lf.legend_above(ax)
 lf.save(fig, "out/first")

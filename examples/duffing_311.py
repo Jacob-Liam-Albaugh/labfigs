@@ -46,7 +46,7 @@ tau_obs, tau_new, tau_all = (t_obs - 100) / T, (t_new - 100) / T, (t_all - 100) 
 for i, ax in enumerate(axes):
     lf.band(ax, tau_obs, post[i] / unit[i], label="Posterior")
     lf.paths(ax, tau_new, pred[i] / unit[i], label="Posterior predictive")
-    ax.plot(tau_all, true[i] / unit[i], color=lf.TRUE, label="True")
+    lf.truth(ax, tau_all, true[i] / unit[i])
     lf.split(ax, 1.0)
     ax.set(xlim=(0, 2), xticks=np.arange(0, 2.01, 0.25), yticks=[-1, 0, 1], ylim=(-1.15, 1.15),
            xlabel=r"$t/T$", ylabel=labels[i])

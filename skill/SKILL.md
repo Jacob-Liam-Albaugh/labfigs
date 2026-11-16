@@ -40,12 +40,15 @@ lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (1
 lf.paths(ax, x, samples, gradient=True)   # heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
 lf.paths(ax, x, samples, gradient="C1")   # same bands in shades of one colour (any colour), or a ramp name ("viridis")
 lf.paths(ax, x, samples, gradient="Kandinsky")  # one colour of a set per band: a series scheme, a Wada number (120), or a list
-ax.plot(x, y, color=lf.TRUE, label="True")
+lf.truth(ax, x, y)                        # the truth: black, labelled "True", above bands and draws
+lf.truth(ax, value)                       # a true parameter value: dashed level; vertical=True on a density
+lf.reference(ax, value, label="Noise floor")  # grey dashed level or curve under the data: a floor, a baseline
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
-lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per method
+lf.ribbon(ax, x, samples, label="IFT")    # median line + light 95% band from draws, one per method
 lf.data(ax, x, y, label="Sensors")        # black measurement dots
 lf.trace(ax, x, y, label="76 Torr")       # dots joined by a line (convergence, sweeps)
-lf.intervals(ax, x, lo, mid, hi, shift=dx)  # dot with a vertical 95% bar per x
+lf.intervals(ax, x, samples, shift=dx)    # dot with a vertical 95% bar per x, from draws of shape (draws, len(x))
+lf.compare(ax, names, {"IFT": a, "Diffusion": b}, true=values)  # dodged intervals per case and method on a categorical axis, with the true values
 lf.marks(ax, x, truth, label="True")      # short black bar at the true value of each x, over the intervals
 lf.tag(fig, "Case 3")                     # names the case top-left, when there is one figure per case
 lf.legend_above(axes[0])                  # one-row legend above the top panel
@@ -72,8 +75,10 @@ lf.surface(ax, x, y, z, ramp="sunset", label="Price")  # 3D surface with its col
 lf.save(fig, "out/name")                  # fits ticks to the data, trims spines, writes name.svg, warns on checklist 6 and 13
 ```
 
-`lf.quantiles(samples)` returns `(lo, median, hi)`, ready to unpack into `ribbon` or
-`intervals`. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position.
+`ribbon` and `intervals` take the draws themselves (`level=0.95`); pass `lo, mid, hi`
+instead when the interval is already computed, and never call `lf.quantiles` just to unpack
+it. `lf.compare` takes draws of shape `(draws, cases)` per method, or a list of draws per
+case when the counts differ; `true=` is one value per case, or a single level. `lf.dodge(n)` gives the `shift` for each of `n` methods sharing an x position.
 Shifts are in points (5 pt apart; `lf.dodge(n, 8)` for more), so the same call works on a
 categorical, a numeric and a log axis. `intervals(connect=True)` joins the dots. `trace`
 takes any `ax.plot` option (`ls="--"`, `marker="s"`).
@@ -98,10 +103,12 @@ What `lf.subplots` and `lf.save` do without being asked, so a script does not:
 - Shared x axis. A panel whose x tick labels are hidden by `sharex` loses its x label
   too, so set `xlabel` on every panel and only the bottom one shows it.
 - Legend. Five or more entries wrap onto two rows, so the legend stays inside the page.
-- Ticks. Every linear axis whose ticks were left automatic gets ticks widened to the
+- Ticks. Every linear or log axis whose ticks were left automatic gets ticks widened to the
   nearest ones enclosing its data, at the step that fits the final panel size. The trimmed
-  spine then covers the data (to within 3% of its range). Axes with explicit ticks, log axes and heatmaps are
-  left alone.
+  spine then covers the data (to within 3% of its range). A log axis gets decades, thinned
+  to fit the panel, or 1-2-5 steps when the data spans under two decades. So a log axis
+  needs only `xscale="log"`: no `trim=False`, hand-set ticks or `minorticks_off()`. Axes
+  with explicit ticks and heatmaps are left alone.
 - Draws. `lf.paths` shows 100 draws in a panel about 5 in wide and fewer, thinner ones in
   smaller panels, down to 25 in a five-column grid, so single draws stay visible. Set
   `draws=`, `lw=` or `alpha=` only to override: more draws when the tails matter, and a
@@ -223,9 +230,10 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 
 - Axis labels are LaTeX math, normalised quantities written as `$x_1/\bar{x}_1$`.
 - Spines are trimmed to the outermost ticks, so ticks define the frame. Leave them to
-  `lf.save`, with two exceptions: an axis with a natural range (`yticks=[-1, 0, 1]`) and a
-  log axis (`xticks=[1e-3, 1e-1, 1e1, 1e3]`), which both take explicit ticks.
-- One legend per figure, above the top panel. No figure title; the caption carries it. In a
+  `lf.save`, log axes included, with one exception: an axis with a natural range
+  (`yticks=[-1, 0, 1]`) takes explicit ticks.
+- One legend per figure, above the top panel, from `lf.legend_above`; never `ax.legend` or
+  `fig.legend`. No figure title; the caption carries it. In a
   grid of cases, `lf.cases` names each case (column title, or row label past three cases). A
   figure that shows one case of several names it with `lf.tag(fig, "76 Torr")`.
 - `band` (crimson, α 0.5) is for one posterior; `ribbon` is for several methods overlaid.
@@ -237,9 +245,11 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
   band up to the split, draws after it). For a smooth single-mode posterior, use draws only
   when asked. One form per distribution: fill reads as inferred, lines as simulated forward.
 - Draw order: band, sample paths, truth.
-- A true parameter value is a plain line: `ax.axhline(v, color=lf.TRUE, ls="--", label="True")`,
-  or `ax.axvline` on a density. When the true value differs per x position (a case each),
-  it is `lf.marks(ax, x, truth, label="True")`. A reference method's interval across a sweep is
+- The truth is always `lf.truth`, never a hand-styled `ax.plot`, `axhline` or `axvline`: a
+  solid curve from `x, y`, a dashed level from one value (`vertical=True` on a density).
+  When the true value differs per x position (a case each), it is
+  `lf.marks(ax, x, truth, label="True")`, which `lf.compare(true=)` draws by itself. A floor
+  or baseline level is `lf.reference(ax, value, label=...)`. A reference method's interval across a sweep is
   `ax.axhspan(lo, hi, color=lf.REFERENCE, alpha=0.3, lw=0, label="NUTS")`.
 - A panel showing two named quantities gets two titles in their colours:
   `ax.set_title(a, loc="left", color="C1")` and `ax.set_title(b, loc="right", color="C0")`.
@@ -295,6 +305,7 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 | A forecast or rollout past the data | `paths` after `lf.split`, truth on top |
 | Several methods on the same function | one `ribbon` per method |
 | Parameter estimates over a sweep | `intervals` with `dodge` |
+| The same estimates for several cases and methods | `compare` |
 | Distribution of a scalar | `density` |
 | Convergence, error against cost | `trace` |
 | An ordered family of curves | lines coloured by `ramp` |
@@ -306,7 +317,7 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 
 1. Data. Plot only what supports the sentence; the rest goes to the text.
 2. Range. Leave limits and ticks to `lf.save`, which frames the data. Set `xlim`, `ylim` or
-   ticks only to cut to the part that matters, for a natural range, or on a log axis.
+   ticks only to cut to the part that matters or for a natural range.
 3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
    share a unit; otherwise trimmed spines and no grid. Each panel's data area is `aspect`
@@ -452,8 +463,8 @@ key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an ed
 with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
 `examples/schemes.py` draws the diverging, cyclic and series schemes, each in use.
 `examples/colours.svg` shows every colour option with its name: open it to pick one by eye.
-`examples/defaults.py` shows what needs no code: dodged intervals with true-value marks on a
-log and a categorical axis, a case tag, a `%` label, fitted ticks and a warning from `lf.save`.
+`examples/defaults.py` shows what needs no code: intervals straight from draws on a log axis
+with fitted ticks, `lf.compare` over cases, a case tag, a `%` label and a warning from `lf.save`.
 
 ## Not covered yet
 

@@ -18,7 +18,7 @@ sets = ("Kandinsky", "tol_muted", 120, ("crimson", "teal", "0.6"))
 fig, axes = lf.subplots(5, 4, width=10.4, aspect=0.75, sharex=True, sharey=True)
 for ax, gradient in zip(axes.flat, (False, *lf.RAMPS, "tab:blue", *sets)):
     lf.paths(ax, x, draws, gradient=gradient, label="Posterior draws")
-    ax.plot(x, np.sin(2 * np.pi * x), color=lf.TRUE, ls="--", label="True")
+    lf.truth(ax, x, np.sin(2 * np.pi * x), ls="--")
     ax.set(title=f"gradient={gradient}", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
 fig.supxlabel("$x$")
 fig.supylabel("$u$")

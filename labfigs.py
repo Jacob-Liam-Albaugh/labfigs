@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import ConnectionPatch, Polygon
 from matplotlib.text import Text
-from matplotlib.ticker import FixedFormatter, MaxNLocator
+from matplotlib.ticker import FixedFormatter, FuncFormatter, LogLocator, MaxNLocator, NullLocator
 from matplotlib.transforms import offset_copy
 
 from labfigs_combos import COMBOS, KINDS
@@ -221,7 +221,13 @@ def band(ax, x, samples, level=0.95, color=CRIMSON, alpha=0.5, **kw):
     return ax.fill_between(x, lo, hi, color=color, alpha=alpha, **kw)
 
 
-def ribbon(ax, x, lo, mid, hi, color=None, alpha=0.25, **kw):
+def spread(q, level):
+    """Takes lo, mid, hi as given, or works them out from one array of draws."""
+    return [np.atleast_1d(v) for v in (q if len(q) == 3 else quantiles(*q, level))]
+
+
+def ribbon(ax, x, *q, color=None, alpha=0.25, level=0.95, **kw):
+    lo, mid, hi = spread(q, level)
     line, = ax.plot(x, mid, color=color, **kw)
     ax.fill_between(x, lo, hi, color=line.get_color(), alpha=alpha, lw=0)
     return line
@@ -243,7 +249,8 @@ def dodge(n, width=5):
     return (np.arange(n) - (n - 1) / 2) * width
 
 
-def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
+def intervals(ax, x, *q, shift=0.0, connect=False, level=0.95, **kw):
+    lo, mid, hi = spread(q, level)
     # shifts in points, so one dodge works on any axis, numeric or log
     bars = ax.errorbar(x, mid, [mid - lo, hi - mid], fmt="o-" if connect else "o", ms=3, **kw)
     for artist in (bars[0], *bars[1], *bars[2]):
@@ -253,6 +260,31 @@ def intervals(ax, x, lo, mid, hi, shift=0.0, connect=False, **kw):
 
 def marks(ax, x, y, **kw):
     return ax.plot(x, y, **{"ls": "", "marker": "_", "ms": 16, "mew": 1, "color": TRUE, "zorder": 3, **kw})
+
+
+def truth(ax, *at, vertical=False, **kw):
+    """Draws the truth above bands and lines: a solid curve from x and y, or a dashed level from one value."""
+    kw = {"color": TRUE, "label": "True", "zorder": 2.5, **kw}
+    if len(at) == 2:
+        return ax.plot(*at, **kw)[0]
+    return (ax.axvline if vertical else ax.axhline)(*at, **{"ls": "--", **kw})
+
+
+def reference(ax, *at, **kw):
+    """Draws a reference curve or level (a noise floor, a baseline) in grey dashes under the data."""
+    return truth(ax, *at, **{"color": REFERENCE, "ls": "--", "label": None, "zorder": 1.5, **kw})
+
+
+def compare(ax, names, samples, true=None, level=0.95, **kw):
+    """Draws one interval per case and method on a categorical axis; samples maps each method to draws of shape (draws, cases), or to a list of draws per case."""
+    samples = samples if isinstance(samples, dict) else {None: samples}
+    at = np.arange(len(names))
+    for (label, draws), shift in zip(samples.items(), dodge(len(samples))):
+        q = quantiles(draws, level) if isinstance(draws, np.ndarray) else np.transpose([quantiles(d, level) for d in draws])
+        intervals(ax, at, *q, shift=shift, label=label, **kw)
+    if true is not None:
+        marks(ax, at, true, label="True") if np.ndim(true) else truth(ax, true)
+    ax.set(xticks=at, xticklabels=names)
 
 
 def paths(ax, x, samples, color=TEAL, alpha=None, draws=None, level=None, gradient=False, **kw):
@@ -393,8 +425,27 @@ def percent(text):
 def loose(ax):
     if ax.images or any(isinstance(c, QuadMesh) for c in ax.collections):
         return []
+    automatic = {"linear": MaxNLocator, "log": LogLocator}
     axes = {name: getattr(ax, f"{name}axis") for name in "xy"}
-    return [name for name, axis in axes.items() if isinstance(axis.get_major_locator(), MaxNLocator) and axis.get_scale() == "linear"]
+    return [name for name, axis in axes.items() if isinstance(axis.get_major_locator(), automatic.get(axis.get_scale(), ()))]
+
+
+def log_ticks(lo, hi, room=6):
+    """Gives log ticks enclosing lo and hi, at most room steps apart: decades, or 1-2-5 or 1-3 steps when the data spans under two decades."""
+    first, last = np.floor(np.log10(lo * 1.02)), np.ceil(np.log10(hi / 1.02))
+    for marks in ([1, 2, 5], [1, 3]) if hi < 100 * lo else ():
+        steps = np.outer(10.0 ** np.arange(first, last + 1), marks).ravel()
+        ticks = steps[np.searchsorted(steps, lo * 1.02, "right") - 1:np.searchsorted(steps, hi / 1.02) + 1]
+        if len(ticks) <= room + 1:
+            return ticks
+    stride = max(1, -(-(last - first) // room))
+    return 10.0 ** np.arange(first, last + stride, stride)
+
+
+def power(value, _=None):
+    exponent = int(np.floor(np.log10(value)))
+    mantissa = round(value / 10.0 ** exponent)
+    return rf"${mantissa}\times10^{{{exponent}}}$" if mantissa > 1 else rf"$10^{{{exponent}}}$"
 
 
 def cover(ax):
@@ -407,6 +458,15 @@ def cover(ax):
             continue
         if not getattr(ax, f"get_autoscale{name}_on")():
             lo, hi = view
+        if axis.get_scale() == "log":
+            ticks = log_ticks(max(lo, view[0]), min(hi, view[1]), axis.get_tick_space())
+            axis.set_ticks(ticks)
+            if len(ticks) > 1 and ticks[1] < 10 * ticks[0]:
+                # writes ticks between decades as plain numbers when those are short, and drops the minor ticks that would crowd them
+                short = ticks[0] >= 1e-3 and ticks[-1] < 1e5
+                axis.set_major_formatter(FuncFormatter((lambda value, _: f"{value:g}") if short else power))
+                axis.set_minor_locator(NullLocator())
+            continue
         step = np.diff(axis.get_major_locator().tick_values(*view))[0]
         lo, hi = max(lo, view[0]) / step, min(hi, view[1]) / step
         # lets data pass the last tick by a line width before adding a whole step for it

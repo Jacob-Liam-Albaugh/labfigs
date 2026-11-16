@@ -37,7 +37,7 @@ for j, truth in enumerate((0.3, -1.0, 1.0)):
             lf.ribbon(ax, x, (mid - width)[part], mid[part], (mid + width)[part], label=name)
         for (name, chain), color in zip(chains.items(), ("C2", "C3")):
             lf.paths(ax, x, chain[:, part], color=color, alpha=0.6, lw=0.5, label=name)
-        ax.axhline(truth, color=lf.TRUE, label="True")
+        lf.truth(ax, truth)
         ax.set(yticks=[-1, 0, 1], ylim=(-1.3, 1.3), ylabel=rf"$k_{j + 1}/\bar{{k}}_{j + 1}$")
     axes[0, j].set(xticks=[0, 1, 2], xticklabels=["0", "$10^6$", r"$2\times10^6$"])
     axes[1, j].set(xticks=[0, 0.5, 1], xticklabels=["0", r"$5\times10^4$", "$10^5$"])
@@ -62,7 +62,7 @@ def diamond(t, centre, reach, power):
 
 
 def compare(ax, t, draws, measured, keep, label, color):
-    lf.ribbon(ax, t[keep], *lf.quantiles(draws)[:, keep], color=color, lw=0.3, label=label)
+    lf.ribbon(ax, t[keep], draws[:, keep], color=color, lw=0.3, label=label)
     lf.signal(ax, t[keep], measured[keep], label="Measurement")
 
 
