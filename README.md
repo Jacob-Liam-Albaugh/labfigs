@@ -105,6 +105,10 @@ The full checklist is in [skill/SKILL.md](skill/SKILL.md).
 - Sanzo Wada, *A Dictionary of Color Combinations*, browsed at [colors.elwyn.co](https://colors.elwyn.co) and taken from Matt DesLauriers' [dataset](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT): the 348 numbered combinations in `lf.COMBOS`.
 - [ColorSchemes.jl](https://github.com/JuliaGraphics/ColorSchemes.jl) (MIT), as listed in the [Plots.jl docs](https://docs.juliaplots.org/stable/generated/colorschemes/): the named single-family schemes in `lf.COMBOS`.
 
+## Licence
+
+labfigs is under the [MIT licence](LICENSE). The licences of the material it adapts are in [NOTICE](NOTICE). Figures made with it can be published without restriction; a paper that uses the `bilbao`, `devon`, `lajolla`, `oslo` or `turku` schemes should cite Crameri's [Scientific colour maps](https://doi.org/10.5281/zenodo.1243862).
+
 ## Claude Code skill
 
 Link the skill once and Claude Code will use the library whenever it plots:
