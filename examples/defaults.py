@@ -47,6 +47,15 @@ assert (level.get_ls(), curve.get_ls(), floor.get_ls(), floor.get_color(), floor
 assert (len(lf.paths(wide, range(20), walks)), len(lf.paths(narrow, range(20), walks))) == (100, 25)
 assert len(lf.paths(narrow, range(20), walks, draws=60)) == 60
 
+crowded = lf.subplots(1, 5)[1][0]
+lf.compare(crowded, list("AB"), {str(method): rng.normal(size=(50, 2)) for method in range(4)}, true=[0, 0])
+crowded.figure.canvas.draw()
+dots = [line for line in crowded.lines if line.get_marker() == "o"]
+assert len(dots) == 4 and all(dot.get_clip_box().contains(*xy) for dot in dots for xy in dot.get_transform().transform(dot.get_xydata()))
+mark = next(line for line in crowded.lines if line.get_marker() == "_")
+half = mark.get_markersize() / 2 * crowded.figure.dpi / 72
+assert all(mark.get_clip_box().contains(x + side * half, y) for x, y in mark.get_transform().transform(mark.get_xydata()) for side in (-1, 1))
+
 few, many = lf.cases(list("abc"), ["u", "v"])[1], lf.cases(list("abcde"), ["u", "v"])[1]
 assert (few.shape, many.shape) == ((3, 2), (5, 2))
 assert (few[0, 0].get_gridspec().ncols, many[0, 0].get_gridspec().ncols) == (3, 2)

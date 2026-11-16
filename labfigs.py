@@ -12,7 +12,7 @@ from matplotlib.container import ErrorbarContainer
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap, Normalize, get_named_colors_mapping, is_color_like, rgb_to_hsv, to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from matplotlib.patches import ConnectionPatch, Polygon
+from matplotlib.patches import ConnectionPatch, Polygon, Rectangle
 from matplotlib.text import Text
 from matplotlib.ticker import FixedFormatter, FuncFormatter, LogLocator, MaxNLocator, NullLocator
 from matplotlib.transforms import offset_copy
@@ -253,13 +253,19 @@ def intervals(ax, x, *q, shift=0.0, connect=False, level=0.95, **kw):
     lo, mid, hi = spread(q, level)
     # shifts in points, so one dodge works on any axis, numeric or log
     bars = ax.errorbar(x, mid, [mid - lo, hi - mid], fmt="o-" if connect else "o", ms=3, **kw)
+    frame = Rectangle((0, 0), 1, 1, transform=offset_copy(ax.transAxes, ax.figure, x=shift, units="points"))
     for artist in (bars[0], *bars[1], *bars[2]):
         artist.set_transform(offset_copy(ax.transData, ax.figure, x=shift, units="points"))
+        # clips to the panel moved by the same shift, so a dodged interval at the first or last position is not cut off
+        artist.set_clip_path(frame)
     return bars
 
 
 def marks(ax, x, y, **kw):
-    return ax.plot(x, y, **{"ls": "", "marker": "_", "ms": 16, "mew": 1, "color": TRUE, "zorder": 3, **kw})
+    drawn = ax.plot(x, y, **{"ls": "", "marker": "_", "ms": 16, "mew": 1, "color": TRUE, "zorder": 3, **kw})
+    # clips to the panel's height only, so a mark at the first or last position keeps both halves
+    drawn[0].set_clip_path(Rectangle((-0.5, 0), 2, 1, transform=ax.transAxes))
+    return drawn
 
 
 def truth(ax, *at, vertical=False, **kw):
