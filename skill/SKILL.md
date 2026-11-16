@@ -432,6 +432,7 @@ key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an ed
 with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
 `examples/combos.py` draws the muted combinations in `lf.COMBOS` as labelled swatches, and
 `examples/schemes.py` its diverging, cyclic and categorical schemes, each in use.
+`examples/colours.svg` shows every colour option with its name: open it to pick one by eye.
 `examples/defaults.py` shows what needs no code: dodged intervals with true-value marks on a
 log and a categorical axis, a case tag, a `%` label, fitted ticks and a warning from `lf.save`.
 

@@ -176,7 +176,8 @@ def combos(size=None, vivid=1.0, arc=(0, 360), kind=None):
 def swatches(ax, sets):
     for row, colours in enumerate(sets.values()):
         n = len(colours)
-        ax.barh(row, np.full(n, 1 / n), left=np.arange(n) / n, height=0.8, color=colours, edgecolor="0.85", lw=0.3)
+        # edges a long set in its own colours, so a gradient shows no seams or stripes
+        ax.barh(row, np.full(n, 1 / n), left=np.arange(n) / n, height=0.8, color=colours, edgecolor="0.85" if n < 20 else colours, lw=0.3)
     ax.set(yticks=range(len(sets)), yticklabels=[str(key).replace("_", " ") for key in sets], xticks=[])
     ax.set(xlim=(0, 1), ylim=(len(sets) - 0.4, -0.6))
     ax.tick_params(length=0)
