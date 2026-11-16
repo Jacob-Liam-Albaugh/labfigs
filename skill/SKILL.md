@@ -162,6 +162,13 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 - One legend per figure, above the top panel. No figure title; the caption carries it. In a
   grid, a column title names the case (`ax.set(title="76 Torr")` on the top row only).
 - `band` (crimson, α 0.5) is for one posterior; `ribbon` is for several methods overlaid.
+- Band or draws. A band is the default for a posterior: a state over the observed window, a
+  static field, a parameter over iterations. Draws (`paths`) are for a forecast or rollout
+  past the data, where paths branch or drift in phase and a pointwise band would fill space
+  no trajectory visits; for a sampler's raw chains against a fitted guide; and when the
+  shape of one realisation is the message. This is how Hao's thesis uses the two (Fig. 3.11:
+  band up to the split, draws after it). For a smooth single-mode posterior, use draws only
+  when asked. One form per distribution: fill reads as inferred, lines as simulated forward.
 - Draw order: band, sample paths, truth.
 - A true parameter value is a plain line: `ax.axhline(v, color=lf.TRUE, ls="--", label="True")`,
   or `ax.axvline` on a density. A reference method's interval across a sweep is
@@ -213,7 +220,8 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 
 | What is shown | Form |
 |---|---|
-| One posterior of a function, against the truth | `band` or `paths`, truth on top |
+| One posterior of a smooth function (a state, a field), against the truth | `band`, truth on top |
+| A forecast or rollout past the data | `paths` after `lf.split`, truth on top |
 | Several methods on the same function | one `ribbon` per method |
 | Parameter estimates over a sweep | `intervals` with `dodge` |
 | Distribution of a scalar | `density` |
@@ -242,7 +250,8 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 8. Legend. `lf.legend_above`, entries in reading order: data, then lines.
 
 Then render, look, and repeat. When the request does not say, default to: full text width
-(6.5 in), 95% intervals, flat draws with no interval under them, axis labels with units, no title.
+(6.5 in), 95% intervals, a band for a posterior, flat draws with no interval under them for a
+forecast, axis labels with units, no title.
 
 ### When the request goes against the guidelines
 
@@ -284,7 +293,8 @@ Message
 4. Readers scan from the top-left in a Z, so the legend or key sits at the top and panels
    read left to right.
 5. The caption says what to see: which panel is the good case, what each colour and marker
-   means. Every axis and every colourbar has a label with its unit.
+   means, and the level of every band (95% unless set). Every axis and every colourbar has
+   a label with its unit.
 
 Page
 
