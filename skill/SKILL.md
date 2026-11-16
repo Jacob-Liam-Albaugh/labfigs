@@ -36,7 +36,7 @@ import labfigs as lf
 lf.use()                                  # style; LaTeX text when latex is installed
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = panel height / width
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
-lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 shown); level=0.95 adds a grey band under them
+lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 in a full-width panel, fewer in small ones); level=0.95 adds a grey band under them
 lf.paths(ax, x, samples, gradient=True)   # heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
 lf.paths(ax, x, samples, gradient="C1")   # same bands in shades of one colour (any colour), or a ramp name ("viridis")
 ax.plot(x, y, color=lf.TRUE, label="True")
@@ -76,7 +76,7 @@ Shifts are in points (5 pt apart; `lf.dodge(n, 8)` for more), so the same call w
 categorical, a numeric and a log axis. `intervals(connect=True)` joins the dots. `trace`
 takes any `ax.plot` option (`ls="--"`, `marker="s"`).
 
-Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=100, level=None, gradient=False | True | colour | ramp name)`,
+Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=, lw=, level=None, gradient=False | True | colour | ramp name)`,
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
 spines (a grid), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
@@ -89,6 +89,10 @@ What `lf.subplots` and `lf.save` do without being asked, so a script does not:
   nearest ones enclosing its data, at the step that fits the final panel size. The trimmed
   spine then covers the data (to within 3% of its range). Axes with explicit ticks, log axes and heatmaps are
   left alone.
+- Draws. `lf.paths` shows 100 draws in a panel about 5 in wide and fewer, thinner ones in
+  smaller panels, down to 25 in a five-column grid, so single draws stay visible. Set
+  `draws=`, `lw=` or `alpha=` only to override: more draws when the tails matter, and a
+  band (`lf.band`) when the draws still merge into one stripe.
 - Per cent. Write `%` plainly in any label (`"Error (%)"`); it is escaped for LaTeX, and
   `\%` is unescaped when LaTeX is off.
 - Warnings. `lf.save` warns when a panel has under 1.4 in of page width, which is five

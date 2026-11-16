@@ -35,3 +35,8 @@ assert not lf.overlaps(fig)
 c.text(0, 1.02, "Steps", transform=c.transAxes, va="top")
 c.text(0, 1.02, "Error", transform=c.transAxes, va="top")
 assert lf.overlaps(fig) == [("Steps", "Error")], lf.overlaps(fig)
+
+walks = rng.normal(0, 1, (200, 20)).cumsum(1)
+wide, narrow = lf.subplots()[1], lf.subplots(1, 5)[1][0]
+assert (len(lf.paths(wide, range(20), walks)), len(lf.paths(narrow, range(20), walks))) == (100, 25)
+assert len(lf.paths(narrow, range(20), walks, draws=60)) == 60

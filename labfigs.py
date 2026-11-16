@@ -43,6 +43,7 @@ RAMPS = {"heat": (HEAT, 1.0, 0.4), "sunset": (SUNSET, 0.0, 1.0)} | {name.lower()
 TEXT_WIDTH = 6.5
 SPINE_OFFSET = 5
 NARROW = 1.4
+ROOMY = 5.0
 
 
 def use(tex=None, font_size=10, series=SERIES, font="serif", dark=False):
@@ -207,13 +208,18 @@ def marks(ax, x, y, **kw):
     return ax.plot(x, y, **{"ls": "", "marker": "_", "ms": 16, "mew": 1, "color": TRUE, "zorder": 3, **kw})
 
 
-def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=100, level=None, gradient=False, **kw):
+def paths(ax, x, samples, color=PREDICTIVE, alpha=None, draws=None, level=None, gradient=False, **kw):
     samples = np.asarray(samples)
+    # thins the draws and their lines in a small panel, where a hundred merge into one smear
+    room = np.clip(ax.get_position().width * ax.figure.get_figwidth() / ROOMY, 0.25, 1)
+    draws = draws or round(100 * room)
+    if "linewidth" not in kw:
+        kw.setdefault("lw", plt.rcParams["lines.linewidth"] * room ** 0.5)
     if level:
         band(ax, x, samples, level, color=REFERENCE, alpha=0.3, lw=0, label=f"{100 * level:g}% interval")
     keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
     if not gradient:
-        return ax.plot(x, samples[keep].T, color=color, alpha=alpha or 0.1, **kw)
+        return ax.plot(x, samples[keep].T, color=color, alpha=alpha or 0.1 / room, **kw)
     cmap, dark, light = shades("heat" if gradient is True else gradient)
     sigmas = np.abs(samples[keep] - samples.mean(0)) / (samples.std(0) + np.finfo(float).tiny)
     points = np.stack([np.broadcast_to(x, sigmas.shape), samples[keep]], -1)
