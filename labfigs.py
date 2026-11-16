@@ -9,7 +9,7 @@ import seaborn as sns
 from matplotlib.cm import ScalarMappable
 from matplotlib.collections import LineCollection, QuadMesh
 from matplotlib.container import ErrorbarContainer
-from matplotlib.colors import LinearSegmentedColormap, Normalize, get_named_colors_mapping, is_color_like, rgb_to_hsv, to_hex, to_rgb
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap, Normalize, get_named_colors_mapping, is_color_like, rgb_to_hsv, to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import ConnectionPatch, Polygon
@@ -46,6 +46,7 @@ RAMPS = {"crimson": tint(CRIMSON), "teal": tint(TEAL), "heat": (HEAT, 1.0, 0.4),
 TEXT_WIDTH = 6.5
 SPINE_OFFSET = 5
 NARROW = 1.4
+FLAT = 0.5
 ROOMY = 5.0
 ACROSS = 3
 
@@ -91,9 +92,11 @@ def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=None, n=None, **kw):
     if n is None:
         fig, axes = plt.subplots(nrows, ncols, figsize=figsize, **kw)
         backdrop(fig)
+        fig.panel_aspect = aspect
         return fig, axes
     fig = plt.figure(figsize=figsize, **kw)
     backdrop(fig)
+    fig.panel_aspect = aspect
     grid = fig.add_gridspec(nrows, 2 * ncols)
     indent = nrows * ncols - n
     spots = [(i // ncols, 2 * (i % ncols) + indent * (i // ncols == nrows - 1)) for i in range(n)]
@@ -143,10 +146,16 @@ def shades(name):
         return RAMPS[name]
     if is_color_like(name):
         return tint(name)
-    if isinstance(name, str):
-        name = COMBOS[name]
+    if isinstance(name, (str, int)):
+        # orders a set of separate colours dark to light, so it shades like a ramp
+        name = sorted(COMBOS[name], key=luma) if discrete(name) else COMBOS[name]
     ends = (0.0, 1.0) if luma(name[0]) < luma(name[-1]) else (1.0, 0.0)
     return LinearSegmentedColormap.from_list("", name), *ends
+
+
+def discrete(name):
+    """Tells a set of separate colours (a list, a Wada number, a series scheme) from a ramp or a single colour."""
+    return not is_color_like(name) and (not isinstance(name, str) or name in KINDS["categorical"])
 
 
 def luma(color):
@@ -191,6 +200,15 @@ def swatches(ax, sets):
 def ramp(n, name="heat"):
     cmap, dark, light = shades(name)
     return cmap(np.linspace(dark, light, n))
+
+
+def steps(name, n=3):
+    """Gives n colours from the centre out: a colour set's own colours, darkest first, or a ramp's run from a third in."""
+    cmap, dark, light = shades(name)
+    own = len(COMBOS[name] if isinstance(name, (str, int)) else name) if discrete(name) else 0
+    # lands on a set's own colours when it has enough of them, and blends between them when it has too few
+    stops = np.linspace(0, own - 1, n).astype(int) / (own - 1) if own >= n > 1 else np.linspace(0 if own else 1 / n, 1, n)
+    return cmap(dark + (light - dark) * stops)
 
 
 def quantiles(samples, level=0.95):
@@ -249,17 +267,16 @@ def paths(ax, x, samples, color=TEAL, alpha=None, draws=None, level=None, gradie
     keep = np.linspace(0, len(samples) - 1, min(draws, len(samples))).astype(int)
     if not gradient:
         return ax.plot(x, samples[keep].T, color=color, alpha=alpha or 0.1 / room, **kw)
-    cmap, dark, light = shades("heat" if gradient is True else gradient)
+    colours = steps("heat" if gradient is True else gradient)
     sigmas = np.abs(samples[keep] - samples.mean(0)) / (samples.std(0) + np.finfo(float).tiny)
     points = np.stack([np.broadcast_to(x, sigmas.shape), samples[keep]], -1)
     segments = np.stack([points[:, :-1], points[:, 1:]], 2).reshape(-1, 2, 2)
-    ax.plot([], [], color=cmap(dark + (light - dark) / 3), label=kw.pop("label", None))
-    depth = np.minimum((sigmas[:, :-1] + sigmas[:, 1:]).ravel() // 2, 2) / 3 + 1 / 3
+    ax.plot([], [], color=colours[0], label=kw.pop("label", None))
+    depth = np.minimum((sigmas[:, :-1] + sigmas[:, 1:]).ravel() // 2, 2)
     central_last = np.argsort(-depth)
-    shade = dark + (light - dark) * depth[central_last]
     # keeps the SVG small: one path per segment would run to tens of megabytes
     lines = LineCollection(
-        segments[central_last], array=shade, cmap=cmap, clim=(0, 1), alpha=alpha or 0.4, rasterized=True, **kw)
+        segments[central_last], array=depth[central_last], cmap=ListedColormap(colours), clim=(-0.5, 2.5), alpha=alpha or 0.4, rasterized=True, **kw)
     ax.add_collection(lines)
     ax.autoscale_view()
     return lines
@@ -411,6 +428,19 @@ def overlaps(fig):
             for b, other in zip(texts[i + 1:], boxes[i + 1:]) if box.overlaps(other)]
 
 
+def fit(fig):
+    """Grows the figure until its flattest panel has the shape subplots was asked for, so legends and labels never squeeze the data."""
+    aspect = getattr(fig, "panel_aspect", None)
+    panels = [ax for ax in fig.axes if ax.get_label() != "<colorbar>" and ax.name == "rectilinear" and ax.get_subplotspec()]
+    for _ in range(2 if aspect and panels else 0):
+        fig.draw_without_rendering()
+        width, height = fig.get_size_inches()
+        short = max(aspect * ax.get_position().width * width - ax.get_position().height * height for ax in panels)
+        if short < 0.02:
+            break
+        fig.set_figheight(height + short * panels[0].get_gridspec().nrows)
+
+
 def check(fig, name):
     pairs = overlaps(fig)
     if pairs:
@@ -421,6 +451,9 @@ def check(fig, name):
     width = min((fig.get_figwidth() * len(s.colspan) / s.get_gridspec().ncols for s in spans), default=NARROW)
     if width < NARROW:
         warnings.warn(f"{name}: panels are {width:.1f} in wide (checklist 6): lf.cases to stack the cases as rows, fewer columns, or a wider page", stacklevel=3)
+    height = min((ax.get_position().height * fig.get_figheight() for ax in panels), default=FLAT)
+    if height < FLAT:
+        warnings.warn(f"{name}: panels are {height:.1f} in tall (checklist 6): a larger aspect, fewer rows, or a legend with fewer rows", stacklevel=3)
     for ax in panels:
         bars = [np.array(c.lines[2][0].get_segments())[:, :, 1] for c in ax.containers if isinstance(c, ErrorbarContainer)]
         if not bars or len({len(b) for b in bars}) > 1 or len(bars[0]) < 4 or ax.get_yscale() != "linear":
@@ -444,6 +477,7 @@ def save(fig, path, trim=True, formats=("svg",)):
     for ax in fig.axes:
         if len(ax.get_shared_x_axes().get_siblings(ax)) > 1 and not ax.xaxis.get_tick_params().get("labelbottom", True):
             ax.set_xlabel("")
+    fit(fig)
     panels = [ax for ax in fig.axes if trim and ax.get_label() != "<colorbar>" and ax.name == "rectilinear" and ax.axison]
     if any(loose(ax) for ax in panels):
         # settles the layout first, so the tick count fits the final panel size

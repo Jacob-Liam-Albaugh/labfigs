@@ -34,11 +34,12 @@ plot elements that recur. Source lives at
 import labfigs as lf
 
 lf.use()                                  # style; LaTeX text when latex is installed
-fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = panel height / width
+fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = height / width of each panel's data area
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
 lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 in a full-width panel, fewer in small ones); level=0.95 adds a grey band under them
 lf.paths(ax, x, samples, gradient=True)   # heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
 lf.paths(ax, x, samples, gradient="C1")   # same bands in shades of one colour (any colour), or a ramp name ("viridis")
+lf.paths(ax, x, samples, gradient="Kandinsky")  # one colour of a set per band: a series scheme, a Wada number (120), or a list
 ax.plot(x, y, color=lf.TRUE, label="True")
 lf.split(ax, 1.0)                         # dashed line between observed and forecast
 lf.ribbon(ax, x, lo, mid, hi, label="IFT")  # median line + light band, one per method
@@ -84,8 +85,10 @@ spines (a grid), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex
 
 What `lf.subplots` and `lf.save` do without being asked, so a script does not:
 
-- Panel shape. `aspect` defaults to 0.62 up to three columns and grows with the column
-  count past that, so panels in a wide grid do not go flat.
+- Panel shape. `aspect` is the height over width of each panel's data area. It defaults
+  to 0.62 up to three columns and grows with the column count past that. `lf.save` makes
+  the figure taller until every panel has that shape, so a legend, tick labels and axis
+  labels add height to the figure and never squeeze the data. Never set `figsize`.
 - Cases. `lf.cases(names, quantities)` is the grid for several cases (pressures, layouts,
   methods) of the same quantities. Up to three cases sit side by side, with the case as
   the column title and the quantity as the y label. Four or more are stacked as rows about
@@ -106,7 +109,8 @@ What `lf.subplots` and `lf.save` do without being asked, so a script does not:
 - Per cent. Write `%` plainly in any label (`"Error (%)"`); it is escaped for LaTeX, and
   `\%` is unescaped when LaTeX is off.
 - Warnings. `lf.save` warns when a panel has under 1.4 in of page width, which is five
-  columns at text width (checklist 6), when two labels overlap (checklist 6), and when one
+  columns at text width (checklist 6), when a panel's data area is under 0.5 in tall
+  (checklist 6: raise `aspect` or use fewer rows), when two labels overlap (checklist 6), and when one
   x position of an interval plot sits apart and sets the range (checklist 13).
 
 Looks, all set in the one `lf.use` call: `use(font="mono")` sets every label in Courier
@@ -202,7 +206,12 @@ steps for ordered sweeps. Grey is free and goes with anything.
 
 Use them through the calls that already exist: `lf.use(series="Klimt")` then `"C0"`,
 `"C1"`; `lf.ramp(n, lf.COMBOS["devon"])` for `n` shades, dark first; `ramp=lf.COMBOS["amp"]`
-in `heatmap` and `surface`, `gradient=lf.COMBOS["amp"]` in `paths`. When the choice is open,
+in `heatmap` and `surface`, `gradient=lf.COMBOS["amp"]` in `paths`. Every colour argument
+(`lf.ramp`, `ramp=`, `gradient=`, `lf.steps`) takes any of: a colour, a ramp name, a scheme
+name, a Wada number, or a list of colours. A series scheme or a Wada combination is put in
+order dark to light, so it shades like a ramp. `lf.steps(name, n)` is the `n` colours for
+ordered levels (standard-deviation bands, nested intervals): a set's own colours, darkest
+first, with blends only when the set has fewer than `n`. When the choice is open,
 draw the candidates with `lf.swatches(ax, sets)` (a dict of label to colours) and look
 before picking. Two measures back the eye: `lf.vividness(colours)` is the strongest colour
 of a set, from 0 (grey) to 1 (neon); stay under about 0.6 for solid fills and thick lines.
@@ -247,6 +256,9 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 - Use `gradient=True` when the draws are the only posterior in the panel. Next to another
   method's `ribbon` keep them flat; the dark core hides the ribbon's median line.
 - `gradient=True` is the heat ramp. Pass a colour for shades of that colour, or a ramp name.
+  Pass a set of separate colours (`gradient="tol_muted"`, `gradient=120`,
+  `gradient=("crimson", "teal", "0.6")`) and each band takes one colour of the set, the
+  darkest at the centre.
   `color=` is ignored once `gradient` is set. Use the choice to tell quantities apart, one
   per quantity in every figure of a report (conductivity in heat, temperature in the
   method's `"Cn"`). The legend entry takes the 1 sd band's colour; when one label is drawn
@@ -297,9 +309,9 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
    ticks only to cut to the part that matters, for a natural range, or on a log axis.
 3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
-   share a unit; otherwise trimmed spines and no grid. Panel height is panel width times
-   `aspect`; the default keeps panels in shape at any column count, so pass `aspect=` only
-   for a different shape. If tick labels of neighbouring panels touch, cap them
+   share a unit; otherwise trimmed spines and no grid. Each panel's data area is `aspect`
+   times as tall as it is wide, whatever the legend and labels take; the default keeps
+   panels in shape at any column count, so pass `aspect=` only for a different shape. If tick labels of neighbouring panels touch, cap them
    (`ax.locator_params(nbins=4)`).
 5. Colour. Posterior against predictive keeps the house crimson then teal. Other series
    take clearly different hues at moderate saturation (a series scheme:
@@ -376,7 +388,8 @@ Page
 6. Size for the page. Set `lf.subplots(width=)` to the printed width (6.5 in for full text
    width, 3.5 in for one column of a two-column paper) and include the figure unscaled, so
    the 10 pt text prints at body-text size. No text below the template's smallest font
-   (about 8 pt).
+   (about 8 pt). A panel whose data area is flatter than about 0.5 in is cramped: the
+   curves become slivers. `lf.save` grows the figure to stop this and warns if it remains.
 7. Check it in the real layout: compile the manuscript, view the page at 100% and compare
    figure text with caption text, then zoom out. Readable without zooming in is the bar.
 8. One style per paper: every figure from labfigs, panels of the same size, few line and

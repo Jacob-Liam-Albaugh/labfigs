@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import numpy as np
+from matplotlib.colors import to_rgba_array
 
 import labfigs as lf
 
@@ -13,8 +14,9 @@ x = np.linspace(0, 1, 200)
 k = np.arange(1, 6)[None, :, None]
 waves = rng.normal(size=(2000, 5, 1)) / k * np.sin(np.pi * k * x + rng.uniform(0, 2 * np.pi, (2000, 5, 1)))
 draws = np.sin(2 * np.pi * x) + 0.35 * waves.sum(1)
-fig, axes = lf.subplots(4, 4, width=10.4, aspect=0.75, sharex=True, sharey=True)
-for ax, gradient in zip(axes.flat, (False, *lf.RAMPS, "tab:blue")):
+sets = ("Kandinsky", "tol_muted", 120, ("crimson", "teal", "0.6"))
+fig, axes = lf.subplots(5, 4, width=10.4, aspect=0.75, sharex=True, sharey=True)
+for ax, gradient in zip(axes.flat, (False, *lf.RAMPS, "tab:blue", *sets)):
     lf.paths(ax, x, draws, gradient=gradient, label="Posterior draws")
     ax.plot(x, np.sin(2 * np.pi * x), color=lf.TRUE, ls="--", label="True")
     ax.set(title=f"gradient={gradient}", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
@@ -23,6 +25,10 @@ fig.supylabel("$u$")
 lf.legend_above(fig)
 lf.save(fig, out / "gradient_draws")
 assert not any("interval" in label for ax in axes.flat for label in ax.get_legend_handles_labels()[1])
+own = to_rgba_array(lf.COMBOS["Kandinsky"])
+assert all(np.abs(own - colour).max(1).min() < 0.01 for colour in lf.steps("Kandinsky")) and len(lf.steps(120)) == 3
+assert np.allclose(lf.steps(sets[-1]), to_rgba_array(sets[-1]), atol=0.01)
+assert np.allclose(lf.steps("heat"), lf.HEAT([0.8, 0.6, 0.4]))
 
 X, Y = np.meshgrid(np.linspace(0, 1, 80), np.linspace(0, 1, 80))
 R = np.hypot(X - 0.5, Y - 0.5)
