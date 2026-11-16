@@ -49,7 +49,8 @@ lf.marks(ax, x, truth, label="True")      # short black bar at the true value of
 lf.tag(fig, "Case 3")                     # names the case top-left, when there is one figure per case
 lf.legend_above(axes[0])                  # one-row legend above the top panel
 lf.legend_above(fig)                      # same, for a grid: labels deduplicated over all panels
-lf.legend_above(fig, ncols=3)             # wrap a long legend (five or more entries) onto two rows
+lf.legend_above(fig, ncols=2)             # five or more entries wrap onto two rows by themselves; ncols= overrides
+fig, axes = lf.cases(names, [ylabel_T, ylabel_k])  # one panel per case and quantity, axes[case, quantity]; sharey=True shares y per quantity
 fig, axes = lf.subplots(2, 3, n=5)        # five panels, short bottom row centred; axes comes back flat
 lf.density(ax, samples, label="SVI")      # density curve of draws; fill=True for a filled one
 lf.shade(ax)                              # grey background marking a panel as different (unconditioned, held out)
@@ -85,6 +86,15 @@ What `lf.subplots` and `lf.save` do without being asked, so a script does not:
 
 - Panel shape. `aspect` defaults to 0.62 up to three columns and grows with the column
   count past that, so panels in a wide grid do not go flat.
+- Cases. `lf.cases(names, quantities)` is the grid for several cases (pressures, layouts,
+  methods) of the same quantities. Up to three cases sit side by side, with the case as
+  the column title and the quantity as the y label. Four or more are stacked as rows about
+  3 in wide, with the quantity as the column title, the case as the y label of its row
+  and one shared x axis per column. `axes[case, quantity]` either way, so the plotting
+  loop is the same. Do not build such a grid from `lf.subplots` by hand.
+- Shared x axis. A panel whose x tick labels are hidden by `sharex` loses its x label
+  too, so set `xlabel` on every panel and only the bottom one shows it.
+- Legend. Five or more entries wrap onto two rows, so the legend stays inside the page.
 - Ticks. Every linear axis whose ticks were left automatic gets ticks widened to the
   nearest ones enclosing its data, at the step that fits the final panel size. The trimmed
   spine then covers the data (to within 3% of its range). Axes with explicit ticks, log axes and heatmaps are
@@ -183,7 +193,7 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
   `lf.save`, with two exceptions: an axis with a natural range (`yticks=[-1, 0, 1]`) and a
   log axis (`xticks=[1e-3, 1e-1, 1e1, 1e3]`), which both take explicit ticks.
 - One legend per figure, above the top panel. No figure title; the caption carries it. In a
-  grid, a column title names the case (`ax.set(title="76 Torr")` on the top row only). A
+  grid of cases, `lf.cases` names each case (column title, or row label past three cases). A
   figure that shows one case of several names it with `lf.tag(fig, "76 Torr")`.
 - `band` (crimson, α 0.5) is for one posterior; `ribbon` is for several methods overlaid.
 - Band or draws. A band is the default for a posterior: a state over the observed window, a
@@ -307,7 +317,7 @@ saying what the line, the band and the markers are, and the level of the band.
 | Methods superimposed whose bands coincide | 1, 3 | one panel per method, or plot the difference or the band width |
 | The same data in two figures | 2 | one figure in the text, the other to an appendix |
 | A figure per case, for many cases | 1, 2 | one or two representative cases, the rest to an appendix |
-| More than four columns at text width | 6 | fewer cases, two rows of panels, or a wider page |
+| More than three cases side by side at text width | 6 | `lf.cases`, which stacks them as rows; fewer cases; or a wider page |
 | One case sets the range for the rest | 13 | a log axis, or that case in its own panel |
 | Many coloured lines in one panel | 3, 9 | the mass in grey, colour for the few that matter |
 | A colour per series that changes between figures | 10 | one `"Cn"` per method across the report |

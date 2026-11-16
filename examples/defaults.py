@@ -40,3 +40,8 @@ walks = rng.normal(0, 1, (200, 20)).cumsum(1)
 wide, narrow = lf.subplots()[1], lf.subplots(1, 5)[1][0]
 assert (len(lf.paths(wide, range(20), walks)), len(lf.paths(narrow, range(20), walks))) == (100, 25)
 assert len(lf.paths(narrow, range(20), walks, draws=60)) == 60
+
+few, many = lf.cases(list("abc"), ["u", "v"])[1], lf.cases(list("abcde"), ["u", "v"])[1]
+assert (few.shape, many.shape) == ((3, 2), (5, 2))
+assert (few[0, 0].get_gridspec().ncols, many[0, 0].get_gridspec().ncols) == (3, 2)
+assert (few[2, 0].get_title(), many[4, 0].get_ylabel(), many[0, 1].get_title()) == ("c", "e", "v")

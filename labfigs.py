@@ -44,6 +44,7 @@ TEXT_WIDTH = 6.5
 SPINE_OFFSET = 5
 NARROW = 1.4
 ROOMY = 5.0
+ACROSS = 3
 
 
 def use(tex=None, font_size=10, series=SERIES, font="serif", dark=False):
@@ -94,6 +95,21 @@ def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=None, n=None, **kw):
     indent = nrows * ncols - n
     spots = [(i // ncols, 2 * (i % ncols) + indent * (i // ncols == nrows - 1)) for i in range(n)]
     return fig, np.array([fig.add_subplot(grid[row, col:col + 2]) for row, col in spots])
+
+
+def cases(names, quantities, sharey=False, aspect=None, **kw):
+    """Makes one panel per case and quantity, indexed [case, quantity]: cases side by side up to ACROSS, stacked as rows beyond."""
+    if len(names) > ACROSS:
+        fig, axes = subplots(len(names), len(quantities), aspect=aspect or 0.36, sharex="col", sharey="col" if sharey else False, squeeze=False, **kw)
+        across, down = quantities, names
+    else:
+        fig, grid = subplots(len(quantities), len(names), aspect=aspect or 0.8, sharey="row" if sharey else False, squeeze=False, **kw)
+        axes, across, down = grid.T, names, quantities
+    for ax, label in zip(fig.axes[:len(across)], across):
+        ax.set_title(label)
+    for ax, label in zip(fig.axes[::len(across)], down):
+        ax.set_ylabel(label)
+    return fig, axes
 
 
 def is_dark():
@@ -322,10 +338,12 @@ def legend_above(target, gap=0.18, ncols=None, **kw):
         if isinstance(h, Line2D) else h
         for h in unique.values()
     ]
+    # wraps five or more entries onto two rows, so the legend stays inside the page width
+    ncols = ncols or (len(unique) if len(unique) < 5 else -(-len(unique) // 2))
     if isinstance(target, Figure):
-        return target.legend(handles, unique.keys(), ncols=ncols or len(unique), loc="outside upper right", **kw)
+        return target.legend(handles, unique.keys(), ncols=ncols, loc="outside upper right", **kw)
     return target.legend(
-        handles, unique.keys(), ncols=ncols or len(unique),
+        handles, unique.keys(), ncols=ncols,
         loc="lower right", bbox_to_anchor=(1, 1 + gap), borderaxespad=0, **kw,
     )
 
@@ -387,7 +405,7 @@ def check(fig, name):
     spans = [ax.get_subplotspec() for ax in panels if ax.get_subplotspec() and len(ax.get_xticks())]
     width = min((fig.get_figwidth() * len(s.colspan) / s.get_gridspec().ncols for s in spans), default=NARROW)
     if width < NARROW:
-        warnings.warn(f"{name}: panels are {width:.1f} in wide (checklist 6): fewer columns, more rows, or a wider page", stacklevel=3)
+        warnings.warn(f"{name}: panels are {width:.1f} in wide (checklist 6): lf.cases to stack the cases as rows, fewer columns, or a wider page", stacklevel=3)
     for ax in panels:
         bars = [np.array(c.lines[2][0].get_segments())[:, :, 1] for c in ax.containers if isinstance(c, ErrorbarContainer)]
         if not bars or len({len(b) for b in bars}) > 1 or len(bars[0]) < 4 or ax.get_yscale() != "linear":
@@ -408,6 +426,9 @@ def save(fig, path, trim=True, formats=("svg",)):
         for axis in (ax.xaxis, ax.yaxis):
             if isinstance(axis.get_major_formatter(), FixedFormatter):
                 axis.get_major_formatter().seq = [percent(label) for label in axis.get_major_formatter().seq]
+    for ax in fig.axes:
+        if len(ax.get_shared_x_axes().get_siblings(ax)) > 1 and not ax.xaxis.get_tick_params().get("labelbottom", True):
+            ax.set_xlabel("")
     panels = [ax for ax in fig.axes if trim and ax.get_label() != "<colorbar>" and ax.name == "rectilinear" and ax.axison]
     if any(loose(ax) for ax in panels):
         # settles the layout first, so the tick count fits the final panel size
