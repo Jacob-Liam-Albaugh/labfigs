@@ -74,6 +74,10 @@ A 3D surface on the dark page (`churkin.py`). Remade with labfigs after Churkin'
 
 ![3D surface](examples/surface_3d.svg)
 
+The eight design steps from the matplotlib default to the finished figure (`design_steps.py`). Remade with labfigs after the iterative design process figure in Churkin's [BeautifulFigures README](https://github.com/AndreyChurkin/BeautifulFigures#readme):
+
+![Design steps](examples/design_steps.svg)
+
 The rest are in [examples/](examples): [gradient draws](examples/gradient_draws.svg), [ramps as line sweeps](examples/palettes.svg), [parameter intervals](examples/intervals.svg), [densities](examples/densities.svg), [shaded panels](examples/shaded_panels.svg), [convergence traces](examples/convergence.svg), three of Hao's figures remade with labfigs ([6.3](examples/fig_6_3.svg) of the [thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570), [14](examples/fig_14.svg) and [16](examples/fig_16.svg) of the [filter paper](https://arxiv.org/abs/2407.16502)), an [edged scatter](examples/edged_scatter.svg) after Churkin's [main example](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/01_main_simple_example) and the [muted colour combinations](examples/combos.svg) in `lf.COMBOS`.
 
 ## Design checklist
