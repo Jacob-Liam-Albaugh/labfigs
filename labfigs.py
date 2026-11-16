@@ -358,7 +358,25 @@ def cover(ax):
         axis.set_ticks(np.arange(np.floor(lo + slack), np.ceil(hi - slack) + 1) * step)
 
 
+def overlaps(fig):
+    # places legend text at the figure's own dpi, which the SVG writer leaves at 72
+    fig.draw_without_rendering()
+    hidden = {id(label) for ax in fig.axes for axis in (ax.xaxis, ax.yaxis)
+              for tick in (*axis.get_major_ticks(), *axis.get_minor_ticks())
+              if not min(axis.get_view_interval()) <= tick.get_loc() <= max(axis.get_view_interval())
+              for label in (tick.label1, tick.label2)}
+    # skips slanted text, whose upright box covers more than its ink
+    texts = [t for t in fig.findobj(Text) if t.get_visible() and t.get_text().strip() and id(t) not in hidden and t.get_rotation() % 90 == 0]
+    boxes = [t.get_window_extent() for t in texts]
+    return [(a.get_text(), b.get_text()) for i, (a, box) in enumerate(zip(texts, boxes))
+            for b, other in zip(texts[i + 1:], boxes[i + 1:]) if box.overlaps(other)]
+
+
 def check(fig, name):
+    pairs = overlaps(fig)
+    if pairs:
+        warnings.warn(f"{name}: {len(pairs)} pairs of labels overlap, first {pairs[0][0]!r} and {pairs[0][1]!r} "
+                      "(checklist 6): fewer ticks, fewer columns, or more room", stacklevel=3)
     panels = [ax for ax in fig.axes if ax.get_label() != "<colorbar>" and ax.axison and ax.name == "rectilinear"]
     spans = [ax.get_subplotspec() for ax in panels if ax.get_subplotspec() and len(ax.get_xticks())]
     width = min((fig.get_figwidth() * len(s.colspan) / s.get_gridspec().ncols for s in spans), default=NARROW)

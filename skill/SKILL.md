@@ -92,8 +92,8 @@ What `lf.subplots` and `lf.save` do without being asked, so a script does not:
 - Per cent. Write `%` plainly in any label (`"Error (%)"`); it is escaped for LaTeX, and
   `\%` is unescaped when LaTeX is off.
 - Warnings. `lf.save` warns when a panel has under 1.4 in of page width, which is five
-  columns at text width (checklist 6), and when one x
-  position of an interval plot sits apart and sets the range (checklist 13).
+  columns at text width (checklist 6), when two labels overlap (checklist 6), and when one
+  x position of an interval plot sits apart and sets the range (checklist 13).
 
 Looks, all set in the one `lf.use` call: `use(font="mono")` sets every label in Courier
 (Churkin's look; LaTeX is off, so write plain-text labels), `use(dark=True)` gives a dark

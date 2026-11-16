@@ -31,3 +31,7 @@ with warnings.catch_warnings(record=True) as caught:
 assert [str(w.message).split(":")[1][:14] for w in caught] == [" one x positio"], [str(w.message) for w in caught]
 assert c.get_yticks()[0] <= 37.3 / 8 and c.get_yticks()[-1] >= 37.3, c.get_yticks()
 assert lf.percent(r"50\%") == lf.percent("50%")
+assert not lf.overlaps(fig)
+c.text(0, 1.02, "Steps", transform=c.transAxes, va="top")
+c.text(0, 1.02, "Error", transform=c.transAxes, va="top")
+assert lf.overlaps(fig) == [("Steps", "Error")], lf.overlaps(fig)
