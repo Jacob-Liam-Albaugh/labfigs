@@ -22,6 +22,9 @@ plot elements that recur. Source lives at
    the user can change a setting by hand and re-run one cell. Never leave a `.py` plotting
    script in a project. A figure cell is its settings plus a handful of `lf.` calls; if
    the drawing part passes about 20 lines, something belongs in the library.
+   The first line under the notebook's title names the kernel to choose. That kernel must
+   exist before the notebook is handed over: check `jupyter kernelspec list` and, when it
+   is missing, make it (see "Running").
 6. Figures are vector only: `lf.save` writes SVG. Run the notebook and look at every figure
    before reporting it as done: `jupyter nbconvert --to notebook --execute --inplace name.ipynb`
    (which also stores each figure under its cell), then
@@ -41,13 +44,14 @@ is named and explained; nothing they need is buried in drawing code.
 
 Cells, in this order. Every notebook in `examples/` follows it: copy the nearest one.
 
-1. Header (markdown). `# Title`, then one line each:
+1. Header (markdown). `# Title`, then one line each, the kernel first:
+   `**Kernel:**` the name of the kernel to choose before running, then its Python and the
+   versions of the packages that matter (JAX, PyTorch), and for a project kernel the
+   command that makes it when it is missing from the list.
    `**Shows:**` what the reader sees, in plain words.
    `**Graph type:**` the form and the `lf.` calls that draw it.
    `**Writes:**` the SVG files and where they land.
    `**To tweak:**` which cell to change and re-run.
-   `**Runs on:**` the kernel, with its Python and the versions of the packages that matter
-   (JAX, PyTorch), and the command that makes the kernel when it is missing.
    `**To run it all:**` the `jupyter nbconvert` command below.
 2. Setup (code). Imports, then `lf.use()` after every other import (a project module may
    switch matplotlib's backend; `lf.use` puts figures back under the cell), the random
@@ -106,6 +110,9 @@ ticks or limits set by hand, which every figure has):
 
 Making one:
 
+- Kernel first. Decide which kernel the notebook runs on (see "Running") and run
+  `jupyter kernelspec list`. A project kernel that is not listed is made now, before the
+  notebook is written.
 - New notebook: write the cells as a draft in the scratch directory, then convert it. In a
   draft, `# %% [markdown]` starts a markdown cell (each line prefixed with `# `) and `# %%`
   starts a code cell. `python -m labfigs <scratch>/draft.py figures/name.ipynb` writes the
@@ -121,6 +128,8 @@ Making one:
 # %% [markdown]
 # # Posterior of the temperature at 76 Torr
 #
+# **Kernel:** `python3`, the default Python (3.10 or newer) with labfigs installed. Choose it before running.
+#
 # **Shows:** the posterior of the temperature as a band, with the true profile on top.
 #
 # **Graph type:** posterior band (`lf.band`, `lf.truth`).
@@ -128,8 +137,6 @@ Making one:
 # **Writes:** `temperature.svg` next to this notebook.
 #
 # **To tweak:** change the capitalised settings at the top of the **Figure** cell and re-run that cell.
-#
-# **Runs on:** the default `python3` kernel: Python 3.10 or newer with labfigs installed.
 #
 # **To run it all:** `jupyter nbconvert --to notebook --execute --inplace temperature.ipynb`, which also saves the figure in this notebook.
 
@@ -610,8 +617,10 @@ jupyter nbconvert --to notebook --execute --inplace figures/name.ipynb
 A notebook runs on the kernel named inside it, in VS Code, JupyterLab and `nbconvert` alike.
 The default, `python3`, is right when the notebook needs only labfigs and what the default
 `python3` has. A notebook that imports a project's own code needs that project's
-environment. In a `uv` project, register a kernel once from the project root (anything
-after the name is passed to `uv run`), then name it when making the notebook:
+environment, as a kernel named after the project. Run `jupyter kernelspec list`: when the
+project's kernel is not there, make it before writing the notebook. In a `uv` project that
+is one command from the project root (anything after the name is passed to `uv run`).
+Then name the kernel when making the notebook:
 
 ```bash
 python3 -m labfigs kernel ift-thermal --no-sync --extra ift
@@ -624,8 +633,9 @@ python3 -m labfigs <scratch>/draft.py report/figures.ipynb ift-thermal
 The kernel starts through `uv run --with-editable labfigs --with ipykernel`, so it is the
 project's own environment with labfigs added, and nothing is installed into the project.
 Check that it works before handing over: the `nbconvert` run above must pass on it. Read
-the versions for the header's `**Runs on:**` line from the project's environment, never
-from memory. `jupyter kernelspec list` shows the kernels already registered.
+the versions for the header's `**Kernel:**` line from the project's environment, never
+from memory. An editor may open the notebook on another kernel it remembers, which fails at
+the first import; the `**Kernel:**` line is what tells the user which one to choose.
 
 Worked examples in the library, each a notebook to copy from:
 `examples/duffing_311.ipynb` reproduces thesis Fig. 3.11,
