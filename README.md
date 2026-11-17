@@ -19,10 +19,12 @@ Text is set with LaTeX when `latex` is on your PATH, and with matplotlib's own m
 In a `uv` project, use it without adding it to the project's dependencies:
 
 ```bash
-uv run --with-editable path/to/labfigs python scripts/plot.py
+uv run --with-editable path/to/labfigs --with nbclient --with ipykernel jupyter-execute figures/name.ipynb
 ```
 
 ## Use
+
+A figure lives in a Jupyter notebook, so anyone can change a setting by hand and re-run one cell. The smallest one:
 
 ```python
 import numpy as np
@@ -41,40 +43,43 @@ lf.legend_above(ax)
 lf.save(fig, "out/first")
 ```
 
-This writes `out/first.svg`. Figures are vector only; pass `formats=("svg", "pdf")` to `lf.save` when LaTeX needs a PDF. The rules:
+This shows the figure under the cell and writes `out/first.svg`. Figures are vector only; pass `formats=("svg", "pdf")` to `lf.save` when LaTeX needs a PDF. The rules:
 
 - Call `lf.use()` once, before any figure. Do not set fonts, sizes or `rcParams` yourself.
 - Make figures with `lf.subplots` and finish them with `lf.save`.
-- Use the house pair (`lf.CRIMSON`, then `lf.TEAL`), `lf.REFERENCE` and `lf.TRUE`, the cycle (`"C0"`, `"C1"`, ...) for methods, and `lf.ramp(n, name)` for ordered sweeps. `lf.use(series="tol_muted")` swaps the cycle for a named scheme. No hex colours in scripts.
-- If a figure needs something the library lacks, add a helper to `labfigs.py` instead of writing it in your script.
+- Use the house pair (`lf.CRIMSON`, then `lf.TEAL`), `lf.REFERENCE` and `lf.TRUE`, the cycle (`"C0"`, `"C1"`, ...) for methods, and `lf.ramp(n, name)` for ordered sweeps. `lf.use(series="tol_muted")` swaps the cycle for a named scheme. No hex colours.
+- If a figure needs something the library lacks, add a helper to `labfigs.py` instead of writing it in your notebook.
+- Lay a notebook out like the ones in `examples/`: a header saying what the figure shows, a data cell, then one cell per figure with its settings in capitals at the top and `lf.save` as the last line.
 
 The full list of helpers, options and conventions is in [skill/SKILL.md](skill/SKILL.md).
 
 ## Examples
 
-Each script in `examples/` writes its SVG figures next to itself. Figures credited to Kairui Hao or Andrey Churkin are not copies of theirs: each is remade with labfigs on synthetic data, and the credit links to the original.
+Each notebook in `examples/` writes its SVG figures next to itself. Open one in JupyterLab or VS Code, change a capitalised setting at the top of a figure's cell and re-run that cell. Figures credited to Kairui Hao or Andrey Churkin are not copies of theirs: each is remade with labfigs on synthetic data, and the credit links to the original.
+
+Run them all without opening them (needs `jupyter`; the notebooks are stored without outputs):
 
 ```bash
-for script in examples/*.py; do python "$script"; done
+for notebook in examples/*.ipynb; do jupyter execute "$notebook"; done
 ```
 
-The house layout: a posterior band, predictive draws, the truth and a forecast split (`duffing_311.py`). Remade with labfigs after Fig. 3.11 of [Hao's thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570):
+The house layout: a posterior band, predictive draws, the truth and a forecast split (`duffing_311.ipynb`). Remade with labfigs after Fig. 3.11 of [Hao's thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570):
 
 ![Posterior and posterior predictive](examples/duffing_311.svg)
 
-A 2D field in every ramp (`field.py`):
+A 2D field in every ramp (`field.ipynb`):
 
 ![Fields](examples/field.svg)
 
-Regions with nested contours, a level key and a fine grid (`feasible_regions.py`). Remade with labfigs after Churkin's [main example](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/01_main_simple_example):
+Regions with nested contours, a level key and a fine grid (`feasible_regions.ipynb`). Remade with labfigs after Churkin's [main example](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/01_main_simple_example):
 
 ![Feasible regions](examples/feasible_regions.svg)
 
-A 3D surface on the dark page (`churkin.py`). Remade with labfigs after Churkin's [3D price surface](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/02_3d_price_surface):
+A 3D surface on the dark page (`churkin.ipynb`). Remade with labfigs after Churkin's [3D price surface](https://github.com/AndreyChurkin/BeautifulFigures/tree/main/02_3d_price_surface):
 
 ![3D surface](examples/surface_3d.svg)
 
-The eight design steps from the matplotlib default to the finished figure (`design_steps.py`). Remade with labfigs after the iterative design process figure in Churkin's [BeautifulFigures README](https://github.com/AndreyChurkin/BeautifulFigures#readme):
+The eight design steps from the matplotlib default to the finished figure (`design_steps.ipynb`). Remade with labfigs after the iterative design process figure in Churkin's [BeautifulFigures README](https://github.com/AndreyChurkin/BeautifulFigures#readme):
 
 ![Design steps](examples/design_steps.svg)
 

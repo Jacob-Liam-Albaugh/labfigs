@@ -1,6 +1,6 @@
 ---
 name: labfigs
-description: Make figures with the lab's house style (labfigs). Use whenever writing or editing any plotting code, or when asked for a plot, figure, chart of results, posterior or posterior-predictive plot, convergence trace, or method comparison, in any project. Use it before writing matplotlib code.
+description: Make figures with the lab's house style (labfigs), each delivered as a Jupyter notebook the user can tweak by hand. Use whenever writing or editing any plotting code, or when asked for a plot, figure, chart of results, posterior or posterior-predictive plot, convergence trace, or method comparison, in any project. Use it before writing matplotlib code.
 ---
 
 # labfigs
@@ -13,20 +13,152 @@ plot elements that recur. Source lives at
 ## Rules
 
 1. Call `lf.use()` once, before creating any figure. Never set `rcParams`, fonts, DPI, or
-   `plt.style` in a script.
-2. Use the named colours. Never write a hex colour in a script.
+   `plt.style` yourself.
+2. Use the named colours. Never write a hex colour.
 3. Create figures with `lf.subplots` and finish every figure with `lf.save`.
 4. If a figure needs an element the library lacks, add a helper to `labfigs.py`, use it,
-   then commit and push the library. Do not write the element inline in the script.
-5. A plotting script should be data loading plus a handful of `lf.` calls. If the plotting
-   part passes about 20 lines, something belongs in the library.
-6. Figures are vector only: `lf.save` writes SVG. Look at every figure before reporting it
-   as done: `rsvg-convert -w 1600 name.svg -o <scratch>/name.png`, then open that preview.
+   then commit and push the library. Do not write the element inline in the notebook.
+5. Deliver every figure as a Jupyter notebook (`.ipynb`) laid out as in "The notebook", so
+   the user can change a setting by hand and re-run one cell. Never leave a `.py` plotting
+   script in a project. A figure cell is its settings plus a handful of `lf.` calls; if
+   the drawing part passes about 20 lines, something belongs in the library.
+6. Figures are vector only: `lf.save` writes SVG. Run the notebook and look at every figure
+   before reporting it as done: `jupyter execute name.ipynb`, then
+   `rsvg-convert -w 1600 name.svg -o <scratch>/name.png` and open that preview.
    The preview is for checking, never the deliverable.
 7. Run the design checklist below on every figure that goes into a paper or report.
 8. When a request goes against the checklist, make the figure as asked and say so. Never
    change the request silently and never stay silent. See "When the request goes against
    the guidelines".
+
+## The notebook
+
+The deliverable is a notebook next to its SVG files. The user opens it, changes a setting
+at the top of a figure's cell and re-runs that cell. Everything they might want to change
+is named and explained; nothing they need is buried in drawing code.
+
+Cells, in this order. Every notebook in `examples/` follows it: copy the nearest one.
+
+1. Header (markdown). `# Title`, then one line each:
+   `**Shows:**` what the reader sees, in plain words.
+   `**Graph type:**` the form and the `lf.` calls that draw it.
+   `**Writes:**` the SVG files and where they land.
+   `**To tweak:**` which cell to change and re-run.
+2. Setup (code). Imports, `lf.use()`, the random generator if any. Nothing else.
+3. `## Data` (markdown, then code). The markdown lists every array the figure uses, with
+   its shape and meaning. The code loads saved results from a path named at the top of the
+   cell (`RUN = Path("../runs/thermal")`). No sampling or training here.
+4. `## Figure` (markdown, then ONE code cell), once per figure. The markdown has one bullet
+   per setting: what it changes in the figure, its unit, the allowed values. The code cell
+   is the settings in capitals, a blank line, the drawing, and `lf.save(fig, NAME)` as its
+   last line.
+5. `## Checks` (markdown, then code), only when there is something real to assert. Its
+   markdown says what a failure means and ends with "Nothing to tweak."
+
+What makes it easy to tweak:
+
+- Settings and drawing share one cell, so re-running that cell alone always gives the new
+  figure, whatever was run before.
+- Every label, colour, tick list, limit, level, panel shape and file name the drawing uses
+  is a setting. No number or string a user would change sits in the drawing code.
+- A setting is named for what it is in the figure (`FORECAST_STARTS`, `BASELINE_LABEL`,
+  `PANEL_ASPECT`), never for the argument it feeds (`X0`, `KW`). Related ones share a line:
+  `X_LABEL, X_TICKS = "$t$ (s)", [0, 5, 10]`.
+- Explanations go in the markdown above the cell, not in code comments.
+- With several figures in one notebook, each gets its own Data and Figure cells
+  (`## Data for the densities`, `## Figure 2: densities`) and its own variable names
+  (`draw_axes`, `field_axes`), so no figure's cell depends on another's.
+- A figure with its own look calls `lf.use(series=SERIES)` or `lf.use(dark=DARK)` at the
+  top of its drawing, with those as settings. `lf.use` starts from a clean style each time.
+- `lf.save(fig, NAME)` last: the cell then shows the figure (as SVG) and the path written.
+  A plain name lands next to the notebook, which is also its working directory. For a
+  report folder, set `OUT = Path("../report/figures")` in setup and save to `OUT / NAME`.
+
+Settings to expose, by graph type (on top of `NAME`, `PANEL_ASPECT`, axis labels, and any
+ticks or limits set by hand, which every figure has):
+
+| Graph type | Settings |
+|---|---|
+| Band, draws, ribbon | legend labels, colours, `LEVEL`, `FORECAST_STARTS` (the split), `DRAWS` when overridden |
+| Gradient draws | `GRADIENT` (ramp, colour or scheme name) |
+| Intervals, `compare` | method labels, `LEVEL`, case names, the baseline's label and band |
+| Density | labels, `FILL_COLOUR`, `LEGEND_COLUMNS` |
+| Grid of panels, `cases` | `ROWS`, `COLUMNS`, panel titles, `SHADED` (which panels) |
+| Heatmap, surface | `RAMP`, `VALUE_RANGE` (both ends of the colourbar), `CENTER`, colourbar label, `VIEW` for 3D |
+| Sweep of curves | `RAMP`, `SHADES`, `LINE_WIDTH` |
+| Regions and contours | `LEVELS`, the two ends of the level colours, region labels |
+| Scatter | subset labels and colours, the trend line's label |
+| Trace, signal, zoom | labels, `ZOOM_WINDOW`, tick steps |
+| A look of its own | `SERIES`, `FONT`, `DARK` |
+
+Making one:
+
+- New notebook: write the cells as a draft in the scratch directory, then convert it. In a
+  draft, `# %% [markdown]` starts a markdown cell (each line prefixed with `# `) and `# %%`
+  starts a code cell. `python -m labfigs <scratch>/draft.py figures/name.ipynb` writes the
+  notebook. Never write notebook JSON by hand, and never put the draft in the project.
+- Existing notebook: edit the one cell with the NotebookEdit tool. Never rebuild it from a
+  draft; the user's hand tweaks live in the notebook.
+- Then `jupyter execute figures/name.ipynb`: it runs every cell top to bottom, fails on any
+  error or failed check, and leaves the notebook free of outputs, so it stays small in git.
+
+```python
+# %% [markdown]
+# # Posterior of the temperature at 76 Torr
+#
+# **Shows:** the posterior of the temperature as a band, with the true profile on top.
+#
+# **Graph type:** posterior band (`lf.band`, `lf.truth`).
+#
+# **Writes:** `temperature.svg` next to this notebook.
+#
+# **To tweak:** change the capitalised settings at the top of the **Figure** cell and re-run that cell.
+
+# %%
+from pathlib import Path
+
+import numpy as np
+
+import labfigs as lf
+
+lf.use()
+
+# %% [markdown]
+# ## Data
+#
+# - `x`: positions along the rod in mm, length 200
+# - `true_profile`: the true temperature at `x`
+# - `draws`: posterior draws, shape `(draws, len(x))`
+
+# %%
+RUN = Path("../runs/thermal")
+
+saved = np.load(RUN / "posterior.npz")
+x, true_profile, draws = saved["x"], saved["truth"], saved["draws"]
+
+# %% [markdown]
+# ## Figure
+#
+# - `NAME`: file name of the figure, without `.svg`
+# - `PANEL_ASPECT`: height of the panel divided by its width
+# - `POSTERIOR_LABEL`, `POSTERIOR_COLOUR`: legend entry and colour of the band
+# - `LEVEL`: probability inside the band
+# - `X_LABEL`, `Y_LABEL`: axis labels, with units
+
+# %%
+NAME = "temperature"
+PANEL_ASPECT = 0.5
+POSTERIOR_LABEL, POSTERIOR_COLOUR = "Posterior", lf.CRIMSON
+LEVEL = 0.95
+X_LABEL, Y_LABEL = "$x$ (mm)", "$T$ (K)"
+
+fig, ax = lf.subplots(aspect=PANEL_ASPECT)
+lf.band(ax, x, draws, level=LEVEL, color=POSTERIOR_COLOUR, label=POSTERIOR_LABEL)
+lf.truth(ax, x, true_profile)
+ax.set(xlabel=X_LABEL, ylabel=Y_LABEL)
+lf.legend_above(ax)
+lf.save(fig, NAME)
+```
 
 ## API
 
@@ -72,7 +204,8 @@ lf.grid(ax)                               # fine major and minor grid for readin
 lf.points(ax, x, y, color="C0", label="Setosa")  # scatter markers with a darker edge of their own hue, drawn above lines
 fig, ax = lf.subplots(aspect=0.75, subplot_kw={"projection": "3d"})
 lf.surface(ax, x, y, z, ramp="sunset", label="Price")  # 3D surface with its colourbar; x, y, z are 2D grids
-lf.save(fig, "out/name")                  # fits ticks to the data, trims spines, writes name.svg, warns on checklist 6 and 13
+lf.save(fig, "out/name")                  # fits ticks to the data, trims spines, writes name.svg, warns on checklist 6 and 13; returns the path
+lf.notebook(draft, "figures/name")        # draft cells (# %% and # %% [markdown]) to name.ipynb; same as python -m labfigs
 ```
 
 `ribbon` and `intervals` take the draws themselves (`level=0.95`); pass `lo, mid, hi`
@@ -88,7 +221,7 @@ Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=, lw=,
 `subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
 spines (a grid), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
 
-What `lf.subplots` and `lf.save` do without being asked, so a script does not:
+What `lf.subplots` and `lf.save` do without being asked, so a notebook does not:
 
 - Panel shape. `aspect` is the height over width of each panel's data area. It defaults
   to 0.62 up to three columns and grows with the column count past that. `lf.save` makes
@@ -189,7 +322,7 @@ both colours are muted. Two things that must be told apart take different hues: 
 one hue (a deep and a pale rose) blur together as band against lines, so keep single-hue
 steps for ordered sweeps. Grey is free and goes with anything.
 
-`lf.COMBOS` is the library to pull from, so no script needs a hex colour:
+`lf.COMBOS` is the library to pull from, so no notebook needs a hex colour:
 
 - `lf.COMBOS["devon"]`: 46 sequential ColorSchemes.jl schemes by name (`"amp"`, `"oslo"`,
   `"acton"`, `"navia"`, `"grayC"` for a neutral grey, ...), up to nine stops in the source's
@@ -294,8 +427,8 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 
 A request such as "make a graph showing ..." leaves most choices open. Fill them in this
 order, which is Churkin's eight steps from a default plot to a finished one. `lf.use()`,
-the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only decides 1, 2,
-4 and 8.
+the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the notebook only decides 1,
+2, 4 and 8, and those decisions are its settings.
 
 0. Message. Write the one sentence the figure must show, then pick the form:
 
@@ -318,7 +451,7 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the script only dec
 1. Data. Plot only what supports the sentence; the rest goes to the text.
 2. Range. Leave limits and ticks to `lf.save`, which frames the data. Set `xlim`, `ylim` or
    ticks only to cut to the part that matters or for a natural range.
-3. Font. Never touched in a script. Set `width=` to the printed width so nothing is rescaled.
+3. Font. Never touched in a notebook. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
    share a unit; otherwise trimmed spines and no grid. Each panel's data area is `aspect`
    times as tall as it is wide, whatever the legend and labels take; the default keeps
@@ -444,27 +577,42 @@ Output
 
 ## Running
 
-The library is installed editable in the default `python3`. In a `uv` project, run without
-touching the project's dependencies:
+The library and Jupyter are installed in the default `python3`:
 
 ```bash
-uv run --with-editable "$HOME/Documents/Predictive Science Lab/labfigs" python scripts/plot.py
+python3 -m labfigs <scratch>/draft.py figures/name.ipynb
 ```
 
-Worked examples in the library: `examples/duffing_311.py` reproduces thesis Fig. 3.11,
-`examples/field.py` shows gradient draws and a 2D field in every ramp,
-`examples/palettes.py` shows every ramp as a sweep, `examples/hao_figures.py` has the other
-thesis figure types: parameter intervals over a sweep (Fig. 3.2), densities per method
+```bash
+jupyter execute figures/name.ipynb
+```
+
+In a `uv` project, run the notebook without touching the project's dependencies (the
+converter needs nothing from the project, so the default `python3` still makes the notebook):
+
+```bash
+uv run --with-editable "$HOME/Documents/Predictive Science Lab/labfigs" --with nbclient --with ipykernel jupyter-execute figures/name.ipynb
+```
+
+`jupyter execute` does not store outputs in the notebook. When the user wants the figures
+kept inside it, run `jupyter nbconvert --to notebook --execute --inplace figures/name.ipynb`.
+
+Worked examples in the library, each a notebook to copy from:
+`examples/duffing_311.ipynb` reproduces thesis Fig. 3.11,
+`examples/field.ipynb` shows gradient draws and a 2D field in every ramp,
+`examples/palettes.ipynb` shows every ramp as a sweep, `examples/hao_figures.ipynb` has the
+other thesis figure types: parameter intervals over a sweep (Fig. 3.2), densities per method
 (Fig. 6.2, 4.6), a grid with shaded panels (Fig. 4.9), convergence traces (Fig. 6.7).
-`examples/hao_replicas.py` redraws three whole figures: a zoomed second row (thesis
+`examples/hao_replicas.ipynb` redraws three whole figures: a zoomed second row (thesis
 Fig. 6.3) and dense signal against measurement (filter paper Figs. 14 and 16).
-`examples/feasible_regions.py` draws feasible regions with nested limit contours, a level
-key and a fine grid. `examples/churkin.py` redraws Churkin's two examples: an edged scatter
-with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
-`examples/schemes.py` draws the diverging, cyclic and series schemes, each in use.
+`examples/feasible_regions.ipynb` draws feasible regions with nested limit contours, a level
+key and a fine grid. `examples/churkin.ipynb` redraws Churkin's two examples: an edged
+scatter with trend lines in the mono font, and a dark 3D surface in the sunset ramp.
+`examples/schemes.ipynb` draws the diverging, cyclic and series schemes, each in use.
 `examples/colours.svg` shows every colour option with its name: open it to pick one by eye.
-`examples/defaults.py` shows what needs no code: intervals straight from draws on a log axis
-with fitted ticks, `lf.compare` over cases, a case tag, a `%` label and a warning from `lf.save`.
+`examples/defaults.ipynb` shows what needs no code: intervals straight from draws on a log
+axis with fitted ticks, `lf.compare` over cases, a case tag, a `%` label and a warning from `lf.save`.
+`examples/design_steps.ipynb` draws Churkin's eight steps from a default plot to a finished one.
 
 ## Not covered yet
 

@@ -1,5 +1,7 @@
+import json
 import re
 import shutil
+import sys
 import warnings
 from pathlib import Path
 
@@ -54,6 +56,8 @@ ACROSS = 3
 def use(tex=None, font_size=10, series=CYCLE, font="serif", dark=False):
     if tex is None:
         tex = font == "serif" and shutil.which("latex") is not None
+    # clears earlier settings, so a notebook cell re-run after a dark figure comes out light
+    plt.rcdefaults()
     sns.set_style("ticks")
     if dark:
         ink = dict.fromkeys(("text.color", "axes.labelcolor", "axes.edgecolor", "xtick.color", "ytick.color"), NIGHT["ink"])
@@ -83,6 +87,9 @@ def use(tex=None, font_size=10, series=CYCLE, font="serif", dark=False):
         "savefig.dpi": 300,
         "savefig.bbox": "tight",
     })
+    if "inline" in plt.get_backend():
+        from matplotlib_inline.backend_inline import set_matplotlib_formats
+        set_matplotlib_formats("svg")
 
 
 def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=None, n=None, **kw):
@@ -556,4 +563,23 @@ def save(fig, path, trim=True, formats=("svg",)):
     for ext in formats:
         fig.savefig(path.with_suffix(f".{ext}"))
     check(fig, path.name)
-    return path
+    return path.with_suffix(f".{formats[0]}")
+
+
+def notebook(draft, target):
+    cells = []
+    for chunk in re.split(r"^# %%", Path(draft).read_text(), flags=re.M)[1:]:
+        head, _, body = chunk.partition("\n")
+        markdown = "[markdown]" in head
+        text = re.sub(r"^# ?", "", body.strip("\n"), flags=re.M) if markdown else body.strip("\n")
+        cell = {"cell_type": "markdown" if markdown else "code", "id": f"cell-{len(cells)}", "metadata": {}, "source": text.splitlines(keepends=True)}
+        cells.append(cell if markdown else cell | {"execution_count": None, "outputs": []})
+    kernel = {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}, "language_info": {"name": "python"}}
+    target = Path(target).with_suffix(".ipynb")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps({"cells": cells, "metadata": kernel, "nbformat": 4, "nbformat_minor": 5}, indent=1) + "\n")
+    return target
+
+
+if __name__ == "__main__":
+    print(notebook(*sys.argv[1:]))
