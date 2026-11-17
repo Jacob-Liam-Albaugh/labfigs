@@ -213,7 +213,7 @@ x, true_profile, draws = saved["x"], saved["truth"], saved["draws"]
 # - `STYLE`: how the posterior is drawn. Type `lf.Style.` to list the choices: `BAND` (95% band with its median),
 #   `DRAWS` (individual draws), `GRADIENT` (draws shaded by standard deviations from the mean)
 # - `POSTERIOR_LABEL`, `POSTERIOR_COLOUR`: legend entry and colour of the posterior. Type `lf.Colour.` to list the colours.
-#   Under `GRADIENT` a ramp name (`"heat"`, `"viridis"`) also works.
+#   A ramp works too (type `lf.Ramp.` to list them): its darkest shade for a band or plain draws, all shades under `GRADIENT`.
 # - `X_LABEL`, `Y_LABEL`: axis labels, with units
 
 # %%
@@ -241,7 +241,7 @@ import labfigs as lf
 
 lf.use()                                  # style; LaTeX text when latex is installed
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = height / width of each panel's data area
-lf.posterior(ax, x, samples, lf.Style.BAND, lf.Colour.CRIMSON, label="Posterior")  # a posterior from draws, shape (draws, len(x)); the style is one setting: BAND (ribbon), DRAWS (paths), GRADIENT (gradient paths, colour or ramp name)
+lf.posterior(ax, x, samples, lf.Style.BAND, lf.Colour.CRIMSON, label="Posterior")  # a posterior from draws, shape (draws, len(x)); the style is one setting: BAND (ribbon), DRAWS (paths), GRADIENT (gradient paths); the colour is a colour or a ramp (lf.Ramp.HEAT) and is the same hue in every style
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
 lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 in a full-width panel, fewer in small ones); level=0.95 adds a grey band under them
 lf.paths(ax, x, samples, gradient=True)   # heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
@@ -463,6 +463,11 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
   colour setting) at the top of the figure cell, so the user switches between band, draws and gradient draws,
   or changes the colour, by editing one line. Call `band`, `ribbon` or `paths` directly only when the form is
   fixed by the figure (a band up to a split and draws after it, quantiles that came without draws).
+- Colours never depend on the style. Every colour in a figure is a named setting passed to the call, so a figure
+  keeps its colours when `STYLE` changes. Two quantities in different colours (temperature teal, conductivity heat)
+  are two settings, `PROFILE_COLOUR = lf.Colour.TEAL` and `CONDUCTIVITY_COLOUR = lf.Ramp.HEAT`, never a rule such
+  as "heat under gradient" inside a helper. Give the legend label to one of them only.
+- Ramps are named through `lf.Ramp` in settings (`lf.Ramp.HEAT`, `lf.Ramp.VIRIDIS`), like `lf.Colour`.
 - Draw order: band, sample paths, truth.
 - The truth is always `lf.truth`, never a hand-styled `ax.plot`, `axhline` or `axvline`: a
   solid curve from `x, y`, a dashed level from one value (`vertical=True` on a density).

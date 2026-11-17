@@ -35,6 +35,11 @@ class Style(StrEnum):
     GRADIENT = "gradient"
 
 
+class Ramp(StrEnum):
+    HEAT, SUNSET, CRIMSON, TEAL, BLUES, VIRIDIS, MAGMA = "heat", "sunset", "crimson", "teal", "blues", "viridis", "magma"
+    PLASMA, CIVIDIS, ROCKET, MAKO, FLARE, CREST, YLGNBU = "plasma", "cividis", "rocket", "mako", "flare", "crest", "ylgnbu"
+
+
 CRIMSON, TEAL = Colour.CRIMSON, Colour.TEAL
 # points matplotlib's "teal" at the house teal, so the name is one colour as a line and as a ramp
 get_named_colors_mapping()["teal"] = to_hex(TEAL)
@@ -353,12 +358,12 @@ def paths(ax, x, samples, color=TEAL, alpha=None, draws=None, level=None, gradie
     return lines
 
 
-def posterior(ax, x, samples, style=Style.BAND, color=None, **kw):
-    """Draws a posterior from its draws as a band with its median, as flat draws, or as draws shaded by standard deviations from the mean; under GRADIENT color may also be a ramp or scheme name."""
-    style = Style(style)
+def posterior(ax, x, samples, style=Style.BAND, color=CRIMSON, **kw):
+    """Draws a posterior from its draws as a band with its median, as flat draws, or as draws shaded by standard deviations from the mean; color is a colour or a ramp, and a ramp gives its darkest shade to a band and to flat draws."""
+    style, flat = Style(style), color if is_color_like(color) else to_hex(steps(color)[0])
     if style is Style.BAND:
-        return ribbon(ax, x, samples, color=color or CRIMSON, **kw)
-    return paths(ax, x, samples, color=color or TEAL, gradient=style is Style.GRADIENT and (color or True), **kw)
+        return ribbon(ax, x, samples, color=flat, **kw)
+    return paths(ax, x, samples, color=flat, gradient=style is Style.GRADIENT and color, **kw)
 
 
 def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):
