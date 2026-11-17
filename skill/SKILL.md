@@ -68,6 +68,12 @@ What makes it easy to tweak:
 - With several figures in one notebook, each gets its own Data and Figure cells
   (`## Data for the densities`, `## Figure 2: densities`) and its own variable names
   (`draw_axes`, `field_axes`), so no figure's cell depends on another's.
+- When many figures share one form (the profile figures of a report), draw that form once:
+  a `## Shared settings` cell holds the names, colours and labels every figure uses, and a
+  `## How a ... figure is drawn` cell defines one function that returns the figure, with
+  its arguments explained in the markdown above. Each figure cell is then its own settings
+  and one call, ending in `lf.save`; a family of same-form figures may be one cell with a
+  loop. Say in the header that a shared cell is re-run before the figure cells.
 - A figure with its own look calls `lf.use(series=SERIES)` or `lf.use(dark=DARK)` at the
   top of its drawing, with those as settings. `lf.use` starts from a clean style each time.
 - `lf.save(fig, NAME)` last: the cell then shows the figure (as SVG) and the path written.
