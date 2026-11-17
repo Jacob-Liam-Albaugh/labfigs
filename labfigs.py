@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import sys
@@ -56,6 +57,14 @@ ACROSS = 3
 def use(tex=None, font_size=10, series=CYCLE, font="serif", dark=False):
     if tex is None:
         tex = font == "serif" and shutil.which("latex") is not None
+    # puts figures back under the cell after an imported script has called matplotlib.use("Agg")
+    if "inline" in os.environ.get("MPLBACKEND", "") and plt.get_backend().lower() == "agg":
+        from IPython import get_ipython
+        from IPython.core.pylabtools import activate_matplotlib
+        from matplotlib_inline.backend_inline import configure_inline_support
+        if get_ipython():
+            activate_matplotlib(os.environ["MPLBACKEND"])
+            configure_inline_support(get_ipython(), os.environ["MPLBACKEND"])
     # clears earlier settings, so a notebook cell re-run after a dark figure comes out light
     plt.rcdefaults()
     sns.set_style("ticks")
@@ -89,7 +98,8 @@ def use(tex=None, font_size=10, series=CYCLE, font="serif", dark=False):
     })
     if "inline" in plt.get_backend():
         from matplotlib_inline.backend_inline import set_matplotlib_formats
-        set_matplotlib_formats("svg")
+        # stores a PNG beside the SVG, for viewers that refuse SVG outputs (GitHub, an untrusted JupyterLab notebook)
+        set_matplotlib_formats("svg", "png")
 
 
 def subplots(nrows=1, ncols=1, width=TEXT_WIDTH, aspect=None, n=None, **kw):
@@ -566,7 +576,7 @@ def save(fig, path, trim=True, formats=("svg",)):
     return path.with_suffix(f".{formats[0]}")
 
 
-def notebook(draft, target):
+def notebook(draft, target, kernel="python3"):
     cells = []
     for chunk in re.split(r"^# %%", Path(draft).read_text(), flags=re.M)[1:]:
         head, _, body = chunk.partition("\n")
@@ -574,12 +584,23 @@ def notebook(draft, target):
         text = re.sub(r"^# ?", "", body.strip("\n"), flags=re.M) if markdown else body.strip("\n")
         cell = {"cell_type": "markdown" if markdown else "code", "id": f"cell-{len(cells)}", "metadata": {}, "source": text.splitlines(keepends=True)}
         cells.append(cell if markdown else cell | {"execution_count": None, "outputs": []})
-    kernel = {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}, "language_info": {"name": "python"}}
+    spec = {"kernelspec": {"display_name": kernel, "language": "python", "name": kernel}, "language_info": {"name": "python"}}
     target = Path(target).with_suffix(".ipynb")
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps({"cells": cells, "metadata": kernel, "nbformat": 4, "nbformat_minor": 5}, indent=1) + "\n")
+    target.write_text(json.dumps({"cells": cells, "metadata": spec, "nbformat": 4, "nbformat_minor": 5}, indent=1) + "\n")
     return target
 
 
+def kernel(name, *uv_options):
+    from jupyter_core.paths import jupyter_data_dir
+    # starts through uv, so the kernel is the project's own environment plus labfigs, with nothing installed into it
+    argv = [shutil.which("uv"), "run", "--project", str(Path.cwd()), *uv_options, "--with-editable", str(Path(__file__).resolve().parent),
+            "--with", "ipykernel", "python", "-m", "ipykernel_launcher", "-f", "{connection_file}"]
+    spec = Path(jupyter_data_dir()) / "kernels" / name / "kernel.json"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text(json.dumps({"argv": argv, "display_name": name, "language": "python"}, indent=1) + "\n")
+    return spec
+
+
 if __name__ == "__main__":
-    print(notebook(*sys.argv[1:]))
+    print(kernel(*sys.argv[2:]) if sys.argv[1] == "kernel" else notebook(*sys.argv[1:]))

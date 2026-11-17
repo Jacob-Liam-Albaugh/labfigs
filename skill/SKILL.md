@@ -23,7 +23,8 @@ plot elements that recur. Source lives at
    script in a project. A figure cell is its settings plus a handful of `lf.` calls; if
    the drawing part passes about 20 lines, something belongs in the library.
 6. Figures are vector only: `lf.save` writes SVG. Run the notebook and look at every figure
-   before reporting it as done: `jupyter execute name.ipynb`, then
+   before reporting it as done: `jupyter nbconvert --to notebook --execute --inplace name.ipynb`
+   (which also stores each figure under its cell), then
    `rsvg-convert -w 1600 name.svg -o <scratch>/name.png` and open that preview.
    The preview is for checking, never the deliverable.
 7. Run the design checklist below on every figure that goes into a paper or report.
@@ -33,8 +34,9 @@ plot elements that recur. Source lives at
 
 ## The notebook
 
-The deliverable is a notebook next to its SVG files. The user opens it, changes a setting
-at the top of a figure's cell and re-runs that cell. Everything they might want to change
+The deliverable is a notebook next to its SVG files, saved with its figures inside: each
+figure shows under the cell that draws it, and the same cell writes the SVG. The user opens
+it, changes a setting at the top of a figure's cell and re-runs that cell. Everything they might want to change
 is named and explained; nothing they need is buried in drawing code.
 
 Cells, in this order. Every notebook in `examples/` follows it: copy the nearest one.
@@ -44,7 +46,12 @@ Cells, in this order. Every notebook in `examples/` follows it: copy the nearest
    `**Graph type:**` the form and the `lf.` calls that draw it.
    `**Writes:**` the SVG files and where they land.
    `**To tweak:**` which cell to change and re-run.
-2. Setup (code). Imports, `lf.use()`, the random generator if any. Nothing else.
+   `**Runs on:**` the kernel, with its Python and the versions of the packages that matter
+   (JAX, PyTorch), and the command that makes the kernel when it is missing.
+   `**To run it all:**` the `jupyter nbconvert` command below.
+2. Setup (code). Imports, then `lf.use()` after every other import (a project module may
+   switch matplotlib's backend; `lf.use` puts figures back under the cell), the random
+   generator if any. Nothing else.
 3. `## Data` (markdown, then code). The markdown lists every array the figure uses, with
    its shape and meaning. The code loads saved results from a path named at the top of the
    cell (`RUN = Path("../runs/thermal")`). No sampling or training here.
@@ -102,11 +109,13 @@ Making one:
 - New notebook: write the cells as a draft in the scratch directory, then convert it. In a
   draft, `# %% [markdown]` starts a markdown cell (each line prefixed with `# `) and `# %%`
   starts a code cell. `python -m labfigs <scratch>/draft.py figures/name.ipynb` writes the
-  notebook. Never write notebook JSON by hand, and never put the draft in the project.
+  notebook; a third argument names its kernel (see "Running"). Never write notebook JSON by hand, and never put the draft in the project.
 - Existing notebook: edit the one cell with the NotebookEdit tool. Never rebuild it from a
   draft; the user's hand tweaks live in the notebook.
-- Then `jupyter execute figures/name.ipynb`: it runs every cell top to bottom, fails on any
-  error or failed check, and leaves the notebook free of outputs, so it stays small in git.
+- Then `jupyter nbconvert --to notebook --execute --inplace figures/name.ipynb`: it runs
+  every cell top to bottom on the notebook's kernel, fails on any error or failed check, and
+  saves the notebook with each figure under its cell. Run it again after every edit, so
+  the stored figures never lag behind the code.
 
 ```python
 # %% [markdown]
@@ -119,6 +128,10 @@ Making one:
 # **Writes:** `temperature.svg` next to this notebook.
 #
 # **To tweak:** change the capitalised settings at the top of the **Figure** cell and re-run that cell.
+#
+# **Runs on:** the default `python3` kernel: Python 3.10 or newer with labfigs installed.
+#
+# **To run it all:** `jupyter nbconvert --to notebook --execute --inplace temperature.ipynb`, which also saves the figure in this notebook.
 
 # %%
 from pathlib import Path
@@ -211,7 +224,8 @@ lf.points(ax, x, y, color="C0", label="Setosa")  # scatter markers with a darker
 fig, ax = lf.subplots(aspect=0.75, subplot_kw={"projection": "3d"})
 lf.surface(ax, x, y, z, ramp="sunset", label="Price")  # 3D surface with its colourbar; x, y, z are 2D grids
 lf.save(fig, "out/name")                  # fits ticks to the data, trims spines, writes name.svg, warns on checklist 6 and 13; returns the path
-lf.notebook(draft, "figures/name")        # draft cells (# %% and # %% [markdown]) to name.ipynb; same as python -m labfigs
+lf.notebook(draft, "figures/name", kernel="python3")  # draft cells (# %% and # %% [markdown]) to name.ipynb; same as python -m labfigs
+lf.kernel("ift-thermal", "--extra", "ift")  # registers a Jupyter kernel for the uv project in the working directory, with labfigs added
 ```
 
 `ribbon` and `intervals` take the draws themselves (`level=0.95`); pass `lo, mid, hi`
@@ -590,18 +604,28 @@ python3 -m labfigs <scratch>/draft.py figures/name.ipynb
 ```
 
 ```bash
-jupyter execute figures/name.ipynb
+jupyter nbconvert --to notebook --execute --inplace figures/name.ipynb
 ```
 
-In a `uv` project, run the notebook without touching the project's dependencies (the
-converter needs nothing from the project, so the default `python3` still makes the notebook):
+A notebook runs on the kernel named inside it, in VS Code, JupyterLab and `nbconvert` alike.
+The default, `python3`, is right when the notebook needs only labfigs and what the default
+`python3` has. A notebook that imports a project's own code needs that project's
+environment. In a `uv` project, register a kernel once from the project root (anything
+after the name is passed to `uv run`), then name it when making the notebook:
 
 ```bash
-uv run --with-editable "$HOME/Documents/Predictive Science Lab/labfigs" --with nbclient --with ipykernel jupyter-execute figures/name.ipynb
+python3 -m labfigs kernel ift-thermal --no-sync --extra ift
 ```
 
-`jupyter execute` does not store outputs in the notebook. When the user wants the figures
-kept inside it, run `jupyter nbconvert --to notebook --execute --inplace figures/name.ipynb`.
+```bash
+python3 -m labfigs <scratch>/draft.py report/figures.ipynb ift-thermal
+```
+
+The kernel starts through `uv run --with-editable labfigs --with ipykernel`, so it is the
+project's own environment with labfigs added, and nothing is installed into the project.
+Check that it works before handing over: the `nbconvert` run above must pass on it. Read
+the versions for the header's `**Runs on:**` line from the project's environment, never
+from memory. `jupyter kernelspec list` shows the kernels already registered.
 
 Worked examples in the library, each a notebook to copy from:
 `examples/duffing_311.ipynb` reproduces thesis Fig. 3.11,

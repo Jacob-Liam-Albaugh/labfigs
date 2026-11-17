@@ -16,10 +16,10 @@ pip install -e labfigs
 
 Text is set with LaTeX when `latex` is on your PATH, and with matplotlib's own math text otherwise.
 
-In a `uv` project, use it without adding it to the project's dependencies:
+In a `uv` project, use it without adding it to the project's dependencies. Register a Jupyter kernel once from the project root (it is the project's environment with labfigs added), then pick that kernel in the notebook:
 
 ```bash
-uv run --with-editable path/to/labfigs --with nbclient --with ipykernel jupyter-execute figures/name.ipynb
+python3 -m labfigs kernel my-project
 ```
 
 ## Use
@@ -55,12 +55,12 @@ The full list of helpers, options and conventions is in [skill/SKILL.md](skill/S
 
 ## Examples
 
-Each notebook in `examples/` writes its SVG figures next to itself. Open one in JupyterLab or VS Code, change a capitalised setting at the top of a figure's cell and re-run that cell. Figures credited to Kairui Hao or Andrey Churkin are not copies of theirs: each is remade with labfigs on synthetic data, and the credit links to the original.
+Each notebook in `examples/` shows its figures under the cells that draw them and writes them as SVG next to itself. Open one in JupyterLab or VS Code, change a capitalised setting at the top of a figure's cell and re-run that cell. Figures credited to Kairui Hao or Andrey Churkin are not copies of theirs: each is remade with labfigs on synthetic data, and the credit links to the original.
 
-Run them all without opening them (needs `jupyter`; the notebooks are stored without outputs):
+Run them all without opening them, which also saves the figures inside each notebook (needs `jupyter`, plus `scipy` and `scikit-learn` for two of them):
 
 ```bash
-for notebook in examples/*.ipynb; do jupyter execute "$notebook"; done
+for notebook in examples/*.ipynb; do jupyter nbconvert --to notebook --execute --inplace "$notebook"; done
 ```
 
 The house layout: a posterior band, predictive draws, the truth and a forecast split (`duffing_311.ipynb`). Remade with labfigs after Fig. 3.11 of [Hao's thesis](https://hammer.purdue.edu/articles/thesis/Information_Field_Theory_Approach_to_Uncertainty_Quantification_for_Differential_Equations_Theory_Algorithms_and_Applications/25665570):
