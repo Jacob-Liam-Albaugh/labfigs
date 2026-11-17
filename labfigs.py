@@ -29,6 +29,12 @@ class Colour(StrEnum):
     BLUE, ORANGE, GREEN, PURPLE, BROWN, SAND = (COMBOS["seaborn_deep"][i] for i in (0, 1, 2, 4, 5, 8))
 
 
+class Style(StrEnum):
+    BAND = "band"
+    DRAWS = "draws"
+    GRADIENT = "gradient"
+
+
 CRIMSON, TEAL = Colour.CRIMSON, Colour.TEAL
 # points matplotlib's "teal" at the house teal, so the name is one colour as a line and as a ramp
 get_named_colors_mapping()["teal"] = to_hex(TEAL)
@@ -331,16 +337,28 @@ def paths(ax, x, samples, color=TEAL, alpha=None, draws=None, level=None, gradie
     colours = steps("heat" if gradient is True else gradient)
     sigmas = np.abs(samples[keep] - samples.mean(0)) / (samples.std(0) + np.finfo(float).tiny)
     points = np.stack([np.broadcast_to(x, sigmas.shape), samples[keep]], -1)
-    segments = np.stack([points[:, :-1], points[:, 1:]], 2).reshape(-1, 2, 2)
     ax.plot([], [], color=colours[0], label=kw.pop("label", None))
-    depth = np.minimum((sigmas[:, :-1] + sigmas[:, 1:]).ravel() // 2, 2)
-    central_last = np.argsort(-depth)
-    # keeps the SVG small: one path per segment would run to tens of megabytes
+    depth = np.minimum((sigmas[:, :-1] + sigmas[:, 1:]) // 2, 2)
+    # cuts a draw only where it crosses into another band, so it stays a few vector paths
+    runs = []
+    for line, bands in zip(points, depth):
+        cuts = np.flatnonzero(np.diff(bands)) + 1
+        runs += [(bands[a], line[a:b + 1]) for a, b in zip(np.r_[0, cuts], np.r_[cuts, len(bands)])]
+    runs.sort(key=lambda run: -run[0])
     lines = LineCollection(
-        segments[central_last], array=depth[central_last], cmap=ListedColormap(colours), clim=(-0.5, 2.5), alpha=alpha or 0.4, rasterized=True, **kw)
+        [run[1] for run in runs], array=np.array([run[0] for run in runs]), cmap=ListedColormap(colours), clim=(-0.5, 2.5),
+        alpha=alpha or 0.4, capstyle="butt", **kw)
     ax.add_collection(lines)
     ax.autoscale_view()
     return lines
+
+
+def posterior(ax, x, samples, style=Style.BAND, color=None, **kw):
+    """Draws a posterior from its draws as a band with its median, as flat draws, or as draws shaded by standard deviations from the mean; under GRADIENT color may also be a ramp or scheme name."""
+    style = Style(style)
+    if style is Style.BAND:
+        return ribbon(ax, x, samples, color=color or CRIMSON, **kw)
+    return paths(ax, x, samples, color=color or TEAL, gradient=style is Style.GRADIENT and (color or True), **kw)
 
 
 def heatmap(ax, x, y, z, ramp="heat", center=None, label=None, **kw):

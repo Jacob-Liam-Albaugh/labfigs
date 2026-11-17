@@ -171,7 +171,7 @@ Making one:
 #
 # **Shows:** the posterior of the temperature as a band, with the true profile on top.
 #
-# **Graph type:** posterior band (`lf.band`, `lf.truth`).
+# **Graph type:** posterior from its draws (`lf.posterior`, drawn as `STYLE` says) and the truth (`lf.truth`).
 #
 # **Writes:** `temperature.svg` next to this notebook.
 #
@@ -210,19 +210,21 @@ x, true_profile, draws = saved["x"], saved["truth"], saved["draws"]
 #
 # - `NAME`: file name of the figure, without `.svg`
 # - `PANEL_ASPECT`: height of the panel divided by its width
-# - `POSTERIOR_LABEL`, `POSTERIOR_COLOUR`: legend entry and colour of the band
-# - `LEVEL`: probability inside the band
+# - `STYLE`: how the posterior is drawn. Type `lf.Style.` to list the choices: `BAND` (95% band with its median),
+#   `DRAWS` (individual draws), `GRADIENT` (draws shaded by standard deviations from the mean)
+# - `POSTERIOR_LABEL`, `POSTERIOR_COLOUR`: legend entry and colour of the posterior. Type `lf.Colour.` to list the colours.
+#   Under `GRADIENT` a ramp name (`"heat"`, `"viridis"`) also works.
 # - `X_LABEL`, `Y_LABEL`: axis labels, with units
 
 # %%
 NAME = "temperature"
 PANEL_ASPECT = 0.5
+STYLE = lf.Style.BAND
 POSTERIOR_LABEL, POSTERIOR_COLOUR = "Posterior", lf.Colour.CRIMSON
-LEVEL = 0.95
 X_LABEL, Y_LABEL = "$x$ (mm)", "$T$ (K)"
 
 fig, ax = lf.subplots(aspect=PANEL_ASPECT)
-lf.band(ax, x, draws, level=LEVEL, color=POSTERIOR_COLOUR, label=POSTERIOR_LABEL)
+lf.posterior(ax, x, draws, STYLE, POSTERIOR_COLOUR, label=POSTERIOR_LABEL)
 lf.truth(ax, x, true_profile)
 ax.set(xlabel=X_LABEL, ylabel=Y_LABEL)
 lf.legend_above(ax)
@@ -239,6 +241,7 @@ import labfigs as lf
 
 lf.use()                                  # style; LaTeX text when latex is installed
 fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = height / width of each panel's data area
+lf.posterior(ax, x, samples, lf.Style.BAND, lf.Colour.CRIMSON, label="Posterior")  # a posterior from draws, shape (draws, len(x)); the style is one setting: BAND (ribbon), DRAWS (paths), GRADIENT (gradient paths, colour or ramp name)
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
 lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 in a full-width panel, fewer in small ones); level=0.95 adds a grey band under them
 lf.paths(ax, x, samples, gradient=True)   # heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
@@ -456,6 +459,10 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
   shape of one realisation is the message. This is how Hao's thesis uses the two (Fig. 3.11:
   band up to the split, draws after it). For a smooth single-mode posterior, use draws only
   when asked. One form per distribution: fill reads as inferred, lines as simulated forward.
+- A posterior drawn from its draws goes through `lf.posterior` with a `STYLE = lf.Style.BAND` setting (and a
+  colour setting) at the top of the figure cell, so the user switches between band, draws and gradient draws,
+  or changes the colour, by editing one line. Call `band`, `ribbon` or `paths` directly only when the form is
+  fixed by the figure (a band up to a split and draws after it, quantiles that came without draws).
 - Draw order: band, sample paths, truth.
 - The truth is always `lf.truth`, never a hand-styled `ax.plot`, `axhline` or `axvline`: a
   solid curve from `x, y`, a dashed level from one value (`vertical=True` on a density).
@@ -652,7 +659,7 @@ Output
     directly: add `"pdf"` to `FORMATS` there. Add `"png"` only for a place that cannot take
     a vector file, and keep the SVG beside it.
 19. Rasterise only a layer too dense to draw as vectors, inside an otherwise vector figure
-    (`lf.heatmap`, `lf.surface` and gradient `lf.paths` do this). Check the journal proof: some journals rasterise figures.
+    (`lf.heatmap` and `lf.surface` do this; draws, gradient or not, stay vector lines). Check the journal proof: some journals rasterise figures.
 20. Plan for several rounds: render, look, fix, place in the manuscript, come back the next
     day, ask a colleague.
 

@@ -38,7 +38,7 @@ truth = np.sin(2 * np.pi * x)
 samples = truth * np.random.default_rng(0).normal(1, 0.2, (500, 1))
 
 fig, ax = lf.subplots()
-lf.paths(ax, x, samples, label="Posterior draws")
+lf.posterior(ax, x, samples, lf.Style.DRAWS, lf.Colour.TEAL, label="Posterior draws")
 lf.truth(ax, x, truth)
 ax.set(xlabel="$x$", ylabel="$u$", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
 lf.legend_above(ax)
