@@ -40,16 +40,23 @@ lf.paths(ax, x, samples, label="Posterior draws")
 lf.truth(ax, x, truth)
 ax.set(xlabel="$x$", ylabel="$u$", xticks=[0, 0.5, 1], yticks=[-2, -1, 0, 1, 2])
 lf.legend_above(ax)
-lf.save(fig, "out/first")
+lf.show(fig)
 ```
 
-This shows the figure under the cell and writes `out/first.svg`. Figures are vector only; pass `formats=("svg", "pdf")` to `lf.save` when LaTeX needs a PDF. The rules:
+`lf.show` puts the finished figure under the cell and writes nothing, so you can look and change it first. Save from the next cell:
+
+```python
+lf.save(fig, "out/first")                                 # out/first.svg
+lf.save(fig, "out/first", formats=("svg", "pdf", "png"))  # all three
+```
+
+SVG is the default. Add `"pdf"` for LaTeX and `"png"` (300 dpi) for a place that cannot take a vector file. The rules:
 
 - Call `lf.use()` once, before any figure. Do not set fonts, sizes or `rcParams` yourself.
-- Make figures with `lf.subplots` and finish them with `lf.save`.
+- Make figures with `lf.subplots`, end the drawing cell with `lf.show(fig)`, and save with `lf.save` in a cell of its own.
 - Use the house pair (`lf.CRIMSON`, then `lf.TEAL`), `lf.REFERENCE` and `lf.TRUE`, the cycle (`"C0"`, `"C1"`, ...) for methods, and `lf.ramp(n, name)` for ordered sweeps. `lf.use(series="tol_muted")` swaps the cycle for a named scheme. No hex colours.
 - If a figure needs something the library lacks, add a helper to `labfigs.py` instead of writing it in your notebook.
-- Lay a notebook out like the ones in `examples/`: a header saying what the figure shows, a data cell, then one cell per figure with its settings in capitals at the top and `lf.save` as the last line.
+- Lay a notebook out like the ones in `examples/`: a header saying what the figure shows, a data cell, then per figure a draw cell with its settings in capitals at the top and `lf.show` as the last line, and a one-line save cell after it. `FORMATS` in the setup cell names the file types every save cell writes.
 
 The full list of helpers, options and conventions is in [skill/SKILL.md](skill/SKILL.md).
 
@@ -97,7 +104,7 @@ Before a figure goes into a paper:
 - Fade the mass of lines to grey and colour only the few that matter.
 - Use a ramp for ordered data, never a rainbow. Red reads as wrong and green as right.
 - Put the legend at the top, and write a caption that says what to see.
-- Vector only: `lf.save` writes SVG. Add `formats=("svg", "pdf")` for LaTeX.
+- Vector first: `lf.save` writes SVG. Add `"pdf"` for LaTeX, and `"png"` only where a vector file cannot go.
 - Avoid pie charts. Use 3D only when the surface's shape is the message (`lf.surface`).
 - Expect several rounds of render, look, fix.
 

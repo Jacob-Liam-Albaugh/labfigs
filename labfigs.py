@@ -528,15 +528,15 @@ def check(fig, name):
     pairs = overlaps(fig)
     if pairs:
         warnings.warn(f"{name}: {len(pairs)} pairs of labels overlap, first {pairs[0][0]!r} and {pairs[0][1]!r} "
-                      "(checklist 6): fewer ticks, fewer columns, or more room", stacklevel=3)
+                      "(checklist 6): fewer ticks, fewer columns, or more room", stacklevel=4)
     panels = [ax for ax in fig.axes if ax.get_label() != "<colorbar>" and ax.axison and ax.name == "rectilinear"]
     spans = [ax.get_subplotspec() for ax in panels if ax.get_subplotspec() and len(ax.get_xticks())]
     width = min((fig.get_figwidth() * len(s.colspan) / s.get_gridspec().ncols for s in spans), default=NARROW)
     if width < NARROW:
-        warnings.warn(f"{name}: panels are {width:.1f} in wide (checklist 6): lf.cases to stack the cases as rows, fewer columns, or a wider page", stacklevel=3)
+        warnings.warn(f"{name}: panels are {width:.1f} in wide (checklist 6): lf.cases to stack the cases as rows, fewer columns, or a wider page", stacklevel=4)
     height = min((ax.get_position().height * fig.get_figheight() for ax in panels), default=FLAT)
     if height < FLAT:
-        warnings.warn(f"{name}: panels are {height:.1f} in tall (checklist 6): a larger aspect, fewer rows, or a legend with fewer rows", stacklevel=3)
+        warnings.warn(f"{name}: panels are {height:.1f} in tall (checklist 6): a larger aspect, fewer rows, or a legend with fewer rows", stacklevel=4)
     for ax in panels:
         bars = [np.array(c.lines[2][0].get_segments())[:, :, 1] for c in ax.containers if isinstance(c, ErrorbarContainer)]
         if not bars or len({len(b) for b in bars}) > 1 or len(bars[0]) < 4 or ax.get_yscale() != "linear":
@@ -546,11 +546,12 @@ def check(fig, name):
         apart, rest = ends[extreme], np.delete(ends, extreme, 0)
         if (apart.min() > rest.max() or apart.max() < rest.min()) and np.ptp(rest) < np.ptp(ends) / 3:
             warnings.warn(f"{name}: one x position sets the range of {ax.get_ylabel()!r} (checklist 13): "
-                          "a log axis, or that position in its own panel", stacklevel=3)
+                          "a log axis, or that position in its own panel", stacklevel=4)
 
 
-def save(fig, path, trim=True, formats=("svg",)):
-    path = Path(path)
+def finish(fig, trim, name):
+    if getattr(fig, "finished", False):
+        return
     for text in fig.findobj(Text):
         text.set_text(percent(text.get_text()))
     for ax in fig.axes:
@@ -569,11 +570,27 @@ def save(fig, path, trim=True, formats=("svg",)):
         # widens each automatic axis to the ticks enclosing its data, so a trimmed spine never stops short of it
         cover(ax)
         sns.despine(ax=ax, offset=SPINE_OFFSET, trim=True)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    for ext in formats:
-        fig.savefig(path.with_suffix(f".{ext}"))
-    check(fig, path.name)
-    return path.with_suffix(f".{formats[0]}")
+    fig.finished = True
+    check(fig, name)
+
+
+def show(fig, trim=True):
+    """Frames the data, trims the spines, checks the layout, and puts the figure under the cell."""
+    from IPython.display import display
+    finish(fig, trim, "this figure")
+    display(fig)
+    # keeps the notebook from showing the figure a second time when the cell ends
+    plt.close(fig)
+
+
+def save(fig, path, trim=True, formats=("svg",)):
+    """Writes the figure once per format: "svg", "pdf", "png" or any other type matplotlib knows."""
+    finish(fig, trim, Path(path).name)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    written = [Path(path).with_suffix(f".{ext}") for ext in formats]
+    for file in written:
+        fig.savefig(file)
+    print("Saved", ", ".join(map(str, written)))
 
 
 def notebook(draft, target, kernel="python3"):

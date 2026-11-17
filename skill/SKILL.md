@@ -15,7 +15,10 @@ plot elements that recur. Source lives at
 1. Call `lf.use()` once, before creating any figure. Never set `rcParams`, fonts, DPI, or
    `plt.style` yourself.
 2. Use the named colours. Never write a hex colour.
-3. Create figures with `lf.subplots` and finish every figure with `lf.save`.
+3. Create figures with `lf.subplots`. End the drawing cell with `lf.show(fig)`, which
+   finishes the figure and puts it under the cell without writing a file. Save in a cell
+   of its own, right after: `lf.save(fig, NAME, formats=FORMATS)`. The user looks at the
+   figure, changes it, and saves only when it is right.
 4. If a figure needs an element the library lacks, add a helper to `labfigs.py`, use it,
    then commit and push the library. Do not write the element inline in the notebook.
 5. Deliver every figure as a Jupyter notebook (`.ipynb`) laid out as in "The notebook", so
@@ -25,7 +28,8 @@ plot elements that recur. Source lives at
    The first line under the notebook's title names the kernel to choose. That kernel must
    exist before the notebook is handed over: check `jupyter kernelspec list` and, when it
    is missing, make it (see "Running").
-6. Figures are vector only: `lf.save` writes SVG. Run the notebook and look at every figure
+6. Figures are vector by default: `lf.save` writes SVG, plus a PDF or PNG when `FORMATS`
+   names them. Run the notebook and look at every figure
    before reporting it as done: `jupyter nbconvert --to notebook --execute --inplace name.ipynb`
    (which also stores each figure under its cell), then
    `rsvg-convert -w 1600 name.svg -o <scratch>/name.png` and open that preview.
@@ -38,8 +42,9 @@ plot elements that recur. Source lives at
 ## The notebook
 
 The deliverable is a notebook next to its SVG files, saved with its figures inside: each
-figure shows under the cell that draws it, and the same cell writes the SVG. The user opens
-it, changes a setting at the top of a figure's cell and re-runs that cell. Everything they might want to change
+figure shows under the cell that draws it, and the one-line cell after it writes the file.
+The user opens it, changes a setting at the top of a figure's cell, re-runs that cell until
+the figure is right, then runs the save cell. Everything they might want to change
 is named and explained; nothing they need is buried in drawing code.
 
 Cells, in this order. Every notebook in `examples/` follows it: copy the nearest one.
@@ -52,17 +57,22 @@ Cells, in this order. Every notebook in `examples/` follows it: copy the nearest
    `**Graph type:**` the form and the `lf.` calls that draw it.
    `**Writes:**` the SVG files and where they land.
    `**To tweak:**` which cell to change and re-run.
+   `**To save:**` run the one-line cell under a figure; it writes one file for each type
+   in `FORMATS` (Setup cell), `("svg",)` by default, `("svg", "pdf", "png")` for all three.
    `**To run it all:**` the `jupyter nbconvert` command below.
 2. Setup (code). Imports, then `lf.use()` after every other import (a project module may
    switch matplotlib's backend; `lf.use` puts figures back under the cell), the random
-   generator if any. Nothing else.
+   generator if any, and last `FORMATS = ("svg",)`, the file types every save cell writes.
+   Nothing else.
 3. `## Data` (markdown, then code). The markdown lists every array the figure uses, with
    its shape and meaning. The code loads saved results from a path named at the top of the
    cell (`RUN = Path("../runs/thermal")`). No sampling or training here.
-4. `## Figure` (markdown, then ONE code cell), once per figure. The markdown has one bullet
-   per setting: what it changes in the figure, its unit, the allowed values. The code cell
-   is the settings in capitals, a blank line, the drawing, and `lf.save(fig, NAME)` as its
-   last line.
+4. `## Figure` (markdown, then a draw cell, then a save cell), once per figure. The
+   markdown has one bullet per setting: what it changes in the figure, its unit, the
+   allowed values. The draw cell is the settings in capitals, a blank line, the drawing,
+   and `lf.show(fig)` as its last line: it shows the finished figure and writes nothing.
+   The save cell is one line, `lf.save(fig, NAME, formats=FORMATS)`, and prints the files
+   it wrote. Never put the save in the draw cell.
 5. `## Checks` (markdown, then code), only when there is something real to assert. Its
    markdown says what a failure means and ends with "Nothing to tweak."
 
@@ -83,12 +93,17 @@ What makes it easy to tweak:
   a `## Shared settings` cell holds the names, colours and labels every figure uses, and a
   `## How a ... figure is drawn` cell defines one function that returns the figure, with
   its arguments explained in the markdown above. Each figure cell is then its own settings
-  and one call, ending in `lf.save`; a family of same-form figures may be one cell with a
-  loop. Say in the header that a shared cell is re-run before the figure cells.
+  and one call, ending in `lf.show`; a family of same-form figures may be one cell with a
+  loop that keeps each figure by file name (`drawn[name] = fig`, then `lf.show(fig)`), and
+  its save cell loops over `drawn`. Say in the header that a shared cell is re-run before the figure cells.
 - A figure with its own look calls `lf.use(series=SERIES)` or `lf.use(dark=DARK)` at the
   top of its drawing, with those as settings. `lf.use` starts from a clean style each time.
-- `lf.save(fig, NAME)` last: the cell then shows the figure (as SVG) and the path written.
-  A plain name lands next to the notebook, which is also its working directory. For a
+- `lf.show(fig)` last in the draw cell: the figure appears under it exactly as it will be
+  saved (ticks fitted, spines trimmed, layout checked), with any layout warning.
+- File types are one setting. `FORMATS = ("svg",)` in Setup is the default; add `"pdf"`
+  for LaTeX and `"png"` (300 dpi) for a place that cannot take a vector file. Every save
+  cell passes `formats=FORMATS`, so one edit changes them all.
+- A plain name lands next to the notebook, which is also its working directory. For a
   report folder, set `OUT = Path("../report/figures")` in setup and save to `OUT / NAME`.
 
 Settings to expose, by graph type (on top of `NAME`, `PANEL_ASPECT`, axis labels, and any
@@ -138,6 +153,9 @@ Making one:
 #
 # **To tweak:** change the capitalised settings at the top of the **Figure** cell and re-run that cell.
 #
+# **To save:** run the one-line cell under the figure. It writes one file for each type in `FORMATS`, set in the
+# Setup cell: `("svg",)` by default, `("svg", "pdf", "png")` for all three. Nothing is written until that cell runs.
+#
 # **To run it all:** `jupyter nbconvert --to notebook --execute --inplace temperature.ipynb`, which also saves the figure in this notebook.
 
 # %%
@@ -148,6 +166,7 @@ import numpy as np
 import labfigs as lf
 
 lf.use()
+FORMATS = ("svg",)
 
 # %% [markdown]
 # ## Data
@@ -183,7 +202,10 @@ lf.band(ax, x, draws, level=LEVEL, color=POSTERIOR_COLOUR, label=POSTERIOR_LABEL
 lf.truth(ax, x, true_profile)
 ax.set(xlabel=X_LABEL, ylabel=Y_LABEL)
 lf.legend_above(ax)
-lf.save(fig, NAME)
+lf.show(fig)
+
+# %%
+lf.save(fig, NAME, formats=FORMATS)
 ```
 
 ## API
@@ -226,11 +248,12 @@ free = lf.region(ax, corners, "C2", label="No coordination")  # polygon outline;
 lf.contours(ax, x, y, z, levels, colors, within=free)  # thin contour lines, clipped to a region
 lf.level_key(ax, labels, colors, "Limit:")  # row of boxed level values above the panel, one colour each
 lf.ramp(n, ("crimson", "C2"))             # n colours blending from one colour to another
-lf.grid(ax)                               # fine major and minor grid for reading values off; save with trim=False
+lf.grid(ax)                               # fine major and minor grid for reading values off; show with trim=False
 lf.points(ax, x, y, color="C0", label="Setosa")  # scatter markers with a darker edge of their own hue, drawn above lines
 fig, ax = lf.subplots(aspect=0.75, subplot_kw={"projection": "3d"})
 lf.surface(ax, x, y, z, ramp="sunset", label="Price")  # 3D surface with its colourbar; x, y, z are 2D grids
-lf.save(fig, "out/name")                  # fits ticks to the data, trims spines, writes name.svg, warns on checklist 6 and 13; returns the path
+lf.show(fig)                              # fits ticks to the data, trims spines, warns on checklist 6 and 13, shows the figure under the cell; writes nothing
+lf.save(fig, "out/name", formats=("svg", "pdf", "png"))  # writes name.svg, name.pdf, name.png and prints them; SVG alone by default
 lf.notebook(draft, "figures/name", kernel="python3")  # draft cells (# %% and # %% [markdown]) to name.ipynb; same as python -m labfigs
 lf.kernel("ift-thermal", "--extra", "ift")  # registers a Jupyter kernel for the uv project in the working directory, with labfigs added
 ```
@@ -245,13 +268,13 @@ takes any `ax.plot` option (`ls="--"`, `marker="s"`).
 
 Options: `band(level=0.95, color=, alpha=)`, `paths(color=, alpha=, draws=, lw=, level=None, gradient=False | True | colour | ramp name)`,
 `heatmap(ramp="heat", center=None, label=)` plus any `pcolormesh` option,
-`subplots(width=, aspect=, sharex=...)`, `save(trim=False)` for axes that should keep full
-spines (a grid), `save(formats=("svg", "pdf"))` when LaTeX needs a PDF, `use(tex=False)` for fast drafts.
+`subplots(width=, aspect=, sharex=...)`, `show(trim=False)` for axes that should keep full
+spines (a grid), `save` outside a notebook finishes the figure itself (`save(trim=False)` there), `use(tex=False)` for fast drafts.
 
-What `lf.subplots` and `lf.save` do without being asked, so a notebook does not:
+What `lf.subplots` and `lf.show` do without being asked, so a notebook does not:
 
 - Panel shape. `aspect` is the height over width of each panel's data area. It defaults
-  to 0.62 up to three columns and grows with the column count past that. `lf.save` makes
+  to 0.62 up to three columns and grows with the column count past that. `lf.show` makes
   the figure taller until every panel has that shape, so a legend, tick labels and axis
   labels add height to the figure and never squeeze the data. Never set `figsize`.
 - Cases. `lf.cases(names, quantities)` is the grid for several cases (pressures, layouts,
@@ -275,7 +298,7 @@ What `lf.subplots` and `lf.save` do without being asked, so a notebook does not:
   band (`lf.band`) when the draws still merge into one stripe.
 - Per cent. Write `%` plainly in any label (`"Error (%)"`); it is escaped for LaTeX, and
   `\%` is unescaped when LaTeX is off.
-- Warnings. `lf.save` warns when a panel has under 1.4 in of page width, which is five
+- Warnings. `lf.show` warns when a panel has under 1.4 in of page width, which is five
   columns at text width (checklist 6), when a panel's data area is under 0.5 in tall
   (checklist 6: raise `aspect` or use fewer rows), when two labels overlap (checklist 6), and when one
   x position of an interval plot sits apart and sets the range (checklist 13).
@@ -390,7 +413,7 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 
 - Axis labels are LaTeX math, normalised quantities written as `$x_1/\bar{x}_1$`.
 - Spines are trimmed to the outermost ticks, so ticks define the frame. Leave them to
-  `lf.save`, log axes included, with one exception: an axis with a natural range
+  `lf.show`, log axes included, with one exception: an axis with a natural range
   (`yticks=[-1, 0, 1]`) takes explicit ticks.
 - One legend per figure, above the top panel, from `lf.legend_above`; never `ax.legend` or
   `fig.legend`. No figure title; the caption carries it. In a
@@ -442,11 +465,11 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 - Regions in a plane (feasible sets, operating envelopes): `lf.region` for each outline,
   `lf.contours(..., within=region)` for the levels inside it coloured by
   `lf.ramp(n, (tight, loose))`, `lf.level_key` to name the levels, `lf.grid`, equal aspect,
-  `lf.save(trim=False)`. When each panel has its own colour, each panel gets its own legend
+  `lf.show(trim=False)`. When each panel has its own colour, each panel gets its own legend
   (`lf.legend_above(ax, ncols=1, frameon=False)`); crimson is the shared tight end of every blend.
 - Panel letters go under the x label: `ax.set_xlabel("$P$ (kW)\n(a)")`.
 - A scatter of two measured quantities: `lf.points` per subset, trend lines in the neutral
-  colour (solid and dashed, not two colours), `lf.grid`, `lf.save(trim=False)`.
+  colour (solid and dashed, not two colours), `lf.grid`, `lf.show(trim=False)`.
 - A 3D surface carries no z label; the colourbar's `label=` names the quantity. Set the view
   with `ax.view_init(elev=30, azim=-60)` and keep ticks sparse.
 
@@ -454,7 +477,7 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
 
 A request such as "make a graph showing ..." leaves most choices open. Fill them in this
 order, which is Churkin's eight steps from a default plot to a finished one. `lf.use()`,
-the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the notebook only decides 1,
+the helpers and `lf.show` already do steps 3, 5, 6 and 7, so the notebook only decides 1,
 2, 4 and 8, and those decisions are its settings.
 
 0. Message. Write the one sentence the figure must show, then pick the form:
@@ -476,7 +499,7 @@ the helpers and `lf.save` already do steps 3, 5, 6 and 7, so the notebook only d
 | Regions in a plane | `region`, `contours`, `level_key` |
 
 1. Data. Plot only what supports the sentence; the rest goes to the text.
-2. Range. Leave limits and ticks to `lf.save`, which frames the data. Set `xlim`, `ylim` or
+2. Range. Leave limits and ticks to `lf.show`, which frames the data. Set `xlim`, `ylim` or
    ticks only to cut to the part that matters or for a natural range.
 3. Font. Never touched in a notebook. Set `width=` to the printed width so nothing is rescaled.
 4. Grid and aspect. `lf.grid` when values are read off; `aspect="equal"` when both axes
@@ -506,7 +529,7 @@ at three points:
    figure per case for many cases, the number of panels one paragraph of text has to
    carry, one colour per method across the figures, a caption for every figure.
 2. Each request, before drawing, against the table below.
-3. Each rendered figure, against the checklist. A warning from `lf.save` is a flag:
+3. Each rendered figure, against the checklist. A warning from `lf.show` is a flag:
    report it or remove its cause, never silence it.
 
 Report one line for the set and one line for every request, flagged or not, next to the
@@ -560,7 +583,7 @@ Page
    width, 3.5 in for one column of a two-column paper) and include the figure unscaled, so
    the 10 pt text prints at body-text size. No text below the template's smallest font
    (about 8 pt). A panel whose data area is flatter than about 0.5 in is cramped: the
-   curves become slivers. `lf.save` grows the figure to stop this and warns if it remains.
+   curves become slivers. `lf.show` grows the figure to stop this and warns if it remains.
 7. Check it in the real layout: compile the manuscript, view the page at 100% and compare
    figure text with caption text, then zoom out. Readable without zooming in is the bar.
 8. One style per paper: every figure from labfigs, panels of the same size, few line and
@@ -594,9 +617,10 @@ Craft
 
 Output
 
-18. Vector only. `lf.save` writes SVG, which goes straight into Word, slides, web pages and
+18. Vector first. `lf.save` writes SVG, which goes straight into Word, slides, web pages and
     Inkscape for hand touch-ups (legend spacing, an arrow, a note). LaTeX cannot include SVG
-    directly: pass `formats=("svg", "pdf")` there. Never save a PNG as the figure.
+    directly: add `"pdf"` to `FORMATS` there. Add `"png"` only for a place that cannot take
+    a vector file, and keep the SVG beside it.
 19. Rasterise only a layer too dense to draw as vectors, inside an otherwise vector figure
     (`lf.heatmap`, `lf.surface` and gradient `lf.paths` do this). Check the journal proof: some journals rasterise figures.
 20. Plan for several rounds: render, look, fix, place in the manuscript, come back the next
@@ -651,7 +675,7 @@ scatter with trend lines in the mono font, and a dark 3D surface in the sunset r
 `examples/schemes.ipynb` draws the diverging, cyclic and series schemes, each in use.
 `examples/colours.svg` shows every colour option with its name: open it to pick one by eye.
 `examples/defaults.ipynb` shows what needs no code: intervals straight from draws on a log
-axis with fitted ticks, `lf.compare` over cases, a case tag, a `%` label and a warning from `lf.save`.
+axis with fitted ticks, `lf.compare` over cases, a case tag, a `%` label, a warning from `lf.show` and a save in all three file types.
 `examples/design_steps.ipynb` draws Churkin's eight steps from a default plot to a finished one.
 
 ## Not covered yet
