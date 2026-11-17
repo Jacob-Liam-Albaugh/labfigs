@@ -16,11 +16,13 @@ pip install -e labfigs
 
 Text is set with LaTeX when `latex` is on your PATH, and with matplotlib's own math text otherwise.
 
-In a `uv` project, use it without adding it to the project's dependencies. Register a Jupyter kernel once from the project root (it is the project's environment with labfigs added), then pick that kernel in the notebook:
+A notebook runs on its project's own Python, never on a kernel made just for it. In a `uv` project, add labfigs and Jupyter's kernel package to the project's `.venv` once, from the project root, then pick `.venv` in the notebook's kernel picker (under Python Environments):
 
 ```bash
-python3 -m labfigs kernel my-project
+uv pip install ipykernel nbconvert -e "$HOME/Documents/Predictive Science Lab/labfigs"
 ```
+
+This leaves `pyproject.toml` and `uv.lock` alone; `uv sync` removes the packages again.
 
 ## Use
 
@@ -54,7 +56,7 @@ SVG is the default. Add `"pdf"` for LaTeX and `"png"` (300 dpi) for a place that
 
 - Call `lf.use()` once, before any figure. Do not set fonts, sizes or `rcParams` yourself.
 - Make figures with `lf.subplots`, end the drawing cell with `lf.show(fig)`, and save with `lf.save` in a cell of its own.
-- Use the house pair (`lf.CRIMSON`, then `lf.TEAL`), `lf.REFERENCE` and `lf.TRUE`, the cycle (`"C0"`, `"C1"`, ...) for methods, and `lf.ramp(n, name)` for ordered sweeps. `lf.use(series="tol_muted")` swaps the cycle for a named scheme. No hex colours.
+- Use the named colours: type `lf.Colour.` and the editor lists them (`CRIMSON`, then `TEAL`, the house pair, then `BLUE`, `ORANGE`, `GREEN`, `PURPLE`, `BROWN`, `SAND` for further methods), plus `lf.REFERENCE` and `lf.TRUE`, and `lf.ramp(n, name)` for ordered sweeps. `lf.use(series="tol_muted")` swaps the cycle for a named scheme. No hex colours.
 - If a figure needs something the library lacks, add a helper to `labfigs.py` instead of writing it in your notebook.
 - Lay a notebook out like the ones in `examples/`: a header saying what the figure shows, a data cell, then per figure a draw cell with its settings in capitals at the top and `lf.show` as the last line, and a one-line save cell after it. `FORMATS` in the setup cell names the file types every save cell writes.
 

@@ -4,6 +4,7 @@ import re
 import shutil
 import sys
 import warnings
+from enum import StrEnum
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -22,13 +23,18 @@ from matplotlib.transforms import offset_copy
 
 from labfigs_combos import COMBOS, KINDS
 
-CRIMSON = "crimson"
-TEAL = "lightseagreen"
+class Colour(StrEnum):
+    CRIMSON = "crimson"
+    TEAL = "lightseagreen"
+    BLUE, ORANGE, GREEN, PURPLE, BROWN, SAND = (COMBOS["seaborn_deep"][i] for i in (0, 1, 2, 4, 5, 8))
+
+
+CRIMSON, TEAL = Colour.CRIMSON, Colour.TEAL
 # points matplotlib's "teal" at the house teal, so the name is one colour as a line and as a ramp
 get_named_colors_mapping()["teal"] = to_hex(TEAL)
 REFERENCE = "0.55"
 TRUE = "black"
-CYCLE = [CRIMSON, TEAL, *(COMBOS["seaborn_deep"][i] for i in (0, 1, 2, 4, 5, 8))]
+CYCLE = list(Colour)
 HEAT = LinearSegmentedColormap.from_list(
     "heat", ["#E2E6BD", "#F1DE81", "#F6C971", "#EEAB65", "#DA8459", "#B9534C", "#8E063B"])
 DIVERGING = LinearSegmentedColormap.from_list("diverging", [TEAL, "white", CRIMSON])
@@ -250,7 +256,7 @@ def ribbon(ax, x, *q, color=None, alpha=0.25, level=0.95, **kw):
     return line
 
 
-def points(ax, x, y, color="C0", **kw):
+def points(ax, x, y, color=CRIMSON, **kw):
     return ax.scatter(x, y, s=22, facecolor=color, edgecolor=darker(color), lw=0.75, zorder=3, **kw)
 
 
@@ -399,7 +405,7 @@ def grid(ax):
     ax.set_axisbelow(True)
 
 
-def signal(ax, x, y, color="C2", **kw):
+def signal(ax, x, y, color=Colour.BLUE, **kw):
     return ax.plot(x, y, color=color, ls=(0, (3, 3)), lw=0.3, **kw)
 
 
@@ -593,7 +599,7 @@ def save(fig, path, trim=True, formats=("svg",)):
     print("Saved", ", ".join(map(str, written)))
 
 
-def notebook(draft, target, kernel="python3"):
+def notebook(draft, target):
     cells = []
     for chunk in re.split(r"^# %%", Path(draft).read_text(), flags=re.M)[1:]:
         head, _, body = chunk.partition("\n")
@@ -601,23 +607,12 @@ def notebook(draft, target, kernel="python3"):
         text = re.sub(r"^# ?", "", body.strip("\n"), flags=re.M) if markdown else body.strip("\n")
         cell = {"cell_type": "markdown" if markdown else "code", "id": f"cell-{len(cells)}", "metadata": {}, "source": text.splitlines(keepends=True)}
         cells.append(cell if markdown else cell | {"execution_count": None, "outputs": []})
-    spec = {"kernelspec": {"display_name": kernel, "language": "python", "name": kernel}, "language_info": {"name": "python"}}
+    spec = {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}, "language_info": {"name": "python"}}
     target = Path(target).with_suffix(".ipynb")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps({"cells": cells, "metadata": spec, "nbformat": 4, "nbformat_minor": 5}, indent=1) + "\n")
     return target
 
 
-def kernel(name, *uv_options):
-    from jupyter_core.paths import jupyter_data_dir
-    # starts through uv, so the kernel is the project's own environment plus labfigs, with nothing installed into it
-    argv = [shutil.which("uv"), "run", "--project", str(Path.cwd()), *uv_options, "--with-editable", str(Path(__file__).resolve().parent),
-            "--with", "ipykernel", "python", "-m", "ipykernel_launcher", "-f", "{connection_file}"]
-    spec = Path(jupyter_data_dir()) / "kernels" / name / "kernel.json"
-    spec.parent.mkdir(parents=True, exist_ok=True)
-    spec.write_text(json.dumps({"argv": argv, "display_name": name, "language": "python"}, indent=1) + "\n")
-    return spec
-
-
 if __name__ == "__main__":
-    print(kernel(*sys.argv[2:]) if sys.argv[1] == "kernel" else notebook(*sys.argv[1:]))
+    print(notebook(*sys.argv[1:]))

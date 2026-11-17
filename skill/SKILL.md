@@ -14,7 +14,8 @@ plot elements that recur. Source lives at
 
 1. Call `lf.use()` once, before creating any figure. Never set `rcParams`, fonts, DPI, or
    `plt.style` yourself.
-2. Use the named colours. Never write a hex colour.
+2. Use the named colours: `lf.Colour.CRIMSON`, `lf.Colour.TEAL`, ... Never write a hex
+   colour or a cycle code (`"C0"`, `"C1"`); a name says the colour at a glance.
 3. Create figures with `lf.subplots`. End the drawing cell with `lf.show(fig)`, which
    finishes the figure and puts it under the cell without writing a file. Save in a cell
    of its own, right after: `lf.save(fig, NAME, formats=FORMATS)`. The user looks at the
@@ -25,9 +26,9 @@ plot elements that recur. Source lives at
    the user can change a setting by hand and re-run one cell. Never leave a `.py` plotting
    script in a project. A figure cell is its settings plus a handful of `lf.` calls; if
    the drawing part passes about 20 lines, something belongs in the library.
-   The first line under the notebook's title names the kernel to choose. That kernel must
-   exist before the notebook is handed over: check `jupyter kernelspec list` and, when it
-   is missing, make it (see "Running").
+   The notebook runs on the project's own Python environment, the one its scripts use,
+   never on a kernel made just for the notebook. The first line under the title says which
+   environment that is and how to choose it (see "Running").
 6. Figures are vector by default: `lf.save` writes SVG, plus a PDF or PNG when `FORMATS`
    names them. Run the notebook and look at every figure
    before reporting it as done: `jupyter nbconvert --to notebook --execute --inplace name.ipynb`
@@ -38,6 +39,10 @@ plot elements that recur. Source lives at
 8. When a request goes against the checklist, make the figure as asked and say so. Never
    change the request silently and never stay silent. See "When the request goes against
    the guidelines".
+9. A fixed set of choices is an enum, so the editor lists the choices after the dot and a
+   misspelt one fails at once. Colours come from `lf.Colour`. A notebook's own sets
+   (methods, cases, layouts) are an `Enum` in its settings (`Method.IFT`). Never a bare
+   number, a cycle code or one loose constant per choice. See "The notebook".
 
 ## The notebook
 
@@ -50,9 +55,10 @@ is named and explained; nothing they need is buried in drawing code.
 Cells, in this order. Every notebook in `examples/` follows it: copy the nearest one.
 
 1. Header (markdown). `# Title`, then one line each, the kernel first:
-   `**Kernel:**` the name of the kernel to choose before running, then its Python and the
-   versions of the packages that matter (JAX, PyTorch), and for a project kernel the
-   command that makes it when it is missing from the list.
+   `**Kernel:**` the Python environment to choose before running, which is the project's
+   own (`.venv`), where to find it in the editor's kernel picker, its Python and the
+   versions of the packages that matter (JAX, PyTorch), and the one install command for
+   when the first cell cannot import `labfigs`.
    `**Shows:**` what the reader sees, in plain words.
    `**Graph type:**` the form and the `lf.` calls that draw it.
    `**Writes:**` the SVG files and where they land.
@@ -96,6 +102,22 @@ What makes it easy to tweak:
   and one call, ending in `lf.show`; a family of same-form figures may be one cell with a
   loop that keeps each figure by file name (`drawn[name] = fig`, then `lf.show(fig)`), and
   its save cell loops over `drawn`. Say in the header that a shared cell is re-run before the figure cells.
+- The things a user picks between are an enum, defined once in the settings cell, with
+  the labels and colours as dictionaries keyed by it. The markdown above says "type
+  `Method.` and the editor lists them". Every figure cell then names its choice in full:
+  `METHODS = (Method.IFT, Method.DIFFUSION)`. Members are spelt out (`DIFFUSION_THEN_100`,
+  never `W100`). When the project's code keys its results by a number or a string, the
+  enum is an `IntEnum` or `StrEnum` whose values are taken from that code, so a member
+  works wherever the code expects its own constant:
+
+  ```python
+  class Method(IntEnum):
+      IFT = warm_start.IFT
+      DIFFUSION = warm_start.DIFF
+
+  METHOD_LABEL = {Method.IFT: "Pure IFT", Method.DIFFUSION: "Diffusion"}
+  METHOD_COLOUR = {Method.IFT: lf.Colour.CRIMSON, Method.DIFFUSION: lf.Colour.TEAL}
+  ```
 - A figure with its own look calls `lf.use(series=SERIES)` or `lf.use(dark=DARK)` at the
   top of its drawing, with those as settings. `lf.use` starts from a clean style each time.
 - `lf.show(fig)` last in the draw cell: the figure appears under it exactly as it will be
@@ -125,17 +147,17 @@ ticks or limits set by hand, which every figure has):
 
 Making one:
 
-- Kernel first. Decide which kernel the notebook runs on (see "Running") and run
-  `jupyter kernelspec list`. A project kernel that is not listed is made now, before the
-  notebook is written.
+- Environment first. The notebook runs on the project's own Python (see "Running"). Check
+  that it has `labfigs`, `ipykernel` and `nbconvert`, and add what is missing now, before
+  the notebook is written.
 - New notebook: write the cells as a draft in the scratch directory, then convert it. In a
   draft, `# %% [markdown]` starts a markdown cell (each line prefixed with `# `) and `# %%`
   starts a code cell. `python -m labfigs <scratch>/draft.py figures/name.ipynb` writes the
-  notebook; a third argument names its kernel (see "Running"). Never write notebook JSON by hand, and never put the draft in the project.
+  notebook. Never write notebook JSON by hand, and never put the draft in the project.
 - Existing notebook: edit the one cell with the NotebookEdit tool. Never rebuild it from a
   draft; the user's hand tweaks live in the notebook.
 - Then `jupyter nbconvert --to notebook --execute --inplace figures/name.ipynb`: it runs
-  every cell top to bottom on the notebook's kernel, fails on any error or failed check, and
+  every cell top to bottom on the environment whose `jupyter` is called, fails on any error or failed check, and
   saves the notebook with each figure under its cell. Run it again after every edit, so
   the stored figures never lag behind the code.
 
@@ -143,7 +165,9 @@ Making one:
 # %% [markdown]
 # # Posterior of the temperature at 76 Torr
 #
-# **Kernel:** `python3`, the default Python (3.10 or newer) with labfigs installed. Choose it before running.
+# **Kernel:** this project's own Python, `.venv` (Python 3.12.7, NumPy 2.5.4). In VS Code: the kernel picker at the
+# top right, then **Python Environments**, then `.venv`. If the first cell cannot import `labfigs`, run this once
+# from the project root: `uv pip install ipykernel nbconvert -e "$HOME/Documents/Predictive Science Lab/labfigs"`
 #
 # **Shows:** the posterior of the temperature as a band, with the true profile on top.
 #
@@ -156,7 +180,7 @@ Making one:
 # **To save:** run the one-line cell under the figure. It writes one file for each type in `FORMATS`, set in the
 # Setup cell: `("svg",)` by default, `("svg", "pdf", "png")` for all three. Nothing is written until that cell runs.
 #
-# **To run it all:** `jupyter nbconvert --to notebook --execute --inplace temperature.ipynb`, which also saves the figure in this notebook.
+# **To run it all:** `.venv/bin/jupyter nbconvert --to notebook --execute --inplace figures/temperature.ipynb` from the project root, which also saves the figure in this notebook.
 
 # %%
 from pathlib import Path
@@ -193,7 +217,7 @@ x, true_profile, draws = saved["x"], saved["truth"], saved["draws"]
 # %%
 NAME = "temperature"
 PANEL_ASPECT = 0.5
-POSTERIOR_LABEL, POSTERIOR_COLOUR = "Posterior", lf.CRIMSON
+POSTERIOR_LABEL, POSTERIOR_COLOUR = "Posterior", lf.Colour.CRIMSON
 LEVEL = 0.95
 X_LABEL, Y_LABEL = "$x$ (mm)", "$T$ (K)"
 
@@ -218,7 +242,7 @@ fig, axes = lf.subplots(3, 1, aspect=0.24)  # width 6.5 in; aspect = height / wi
 lf.band(ax, x, samples, label="Posterior")  # 95% band from draws, shape (draws, len(x))
 lf.paths(ax, x, samples, label="Posterior predictive")  # faint line per draw (100 in a full-width panel, fewer in small ones); level=0.95 adds a grey band under them
 lf.paths(ax, x, samples, gradient=True)   # heat-shaded bands: dark within 1 sd of the mean, mid to 2 sd, pale beyond
-lf.paths(ax, x, samples, gradient="C1")   # same bands in shades of one colour (any colour), or a ramp name ("viridis")
+lf.paths(ax, x, samples, gradient=lf.Colour.TEAL)   # same bands in shades of one colour (any colour), or a ramp name ("viridis")
 lf.paths(ax, x, samples, gradient="Kandinsky")  # one colour of a set per band: a series scheme, a Wada number (120), or a list
 lf.truth(ax, x, y)                        # the truth: black, labelled "True", above bands and draws
 lf.truth(ax, value)                       # a true parameter value: dashed level; vertical=True on a density
@@ -244,18 +268,17 @@ for y, c in zip(curves, lf.ramp(len(curves), "heat")):  # ordered sweep, dark to
     ax.plot(x, y, color=c)
 lf.heatmap(ax, x, y, z, vmin=0, vmax=1)   # 2D field with its colourbar; z has shape (len(y), len(x))
 lf.heatmap(ax, x, y, error, center=0)     # signed field: teal below, white at 0, crimson above; ramp="vik" for another pair
-free = lf.region(ax, corners, "C2", label="No coordination")  # polygon outline; dashed=True for a thin dashed one
+free = lf.region(ax, corners, lf.Colour.BLUE, label="No coordination")  # polygon outline; dashed=True for a thin dashed one
 lf.contours(ax, x, y, z, levels, colors, within=free)  # thin contour lines, clipped to a region
 lf.level_key(ax, labels, colors, "Limit:")  # row of boxed level values above the panel, one colour each
-lf.ramp(n, ("crimson", "C2"))             # n colours blending from one colour to another
+lf.ramp(n, (lf.Colour.CRIMSON, lf.Colour.BLUE))             # n colours blending from one colour to another
 lf.grid(ax)                               # fine major and minor grid for reading values off; show with trim=False
-lf.points(ax, x, y, color="C0", label="Setosa")  # scatter markers with a darker edge of their own hue, drawn above lines
+lf.points(ax, x, y, color=lf.Colour.CRIMSON, label="Setosa")  # scatter markers with a darker edge of their own hue, drawn above lines
 fig, ax = lf.subplots(aspect=0.75, subplot_kw={"projection": "3d"})
 lf.surface(ax, x, y, z, ramp="sunset", label="Price")  # 3D surface with its colourbar; x, y, z are 2D grids
 lf.show(fig)                              # fits ticks to the data, trims spines, warns on checklist 6 and 13, shows the figure under the cell; writes nothing
 lf.save(fig, "out/name", formats=("svg", "pdf", "png"))  # writes name.svg, name.pdf, name.png and prints them; SVG alone by default
-lf.notebook(draft, "figures/name", kernel="python3")  # draft cells (# %% and # %% [markdown]) to name.ipynb; same as python -m labfigs
-lf.kernel("ift-thermal", "--extra", "ift")  # registers a Jupyter kernel for the uv project in the working directory, with labfigs added
+lf.notebook(draft, "figures/name")        # draft cells (# %% and # %% [markdown]) to name.ipynb; same as python -m labfigs
 ```
 
 `ribbon` and `intervals` take the draws themselves (`level=0.95`); pass `lo, mid, hi`
@@ -312,8 +335,8 @@ teal page with a soft glow and light ink (slides and posters, not papers),
 
 | Name | Use |
 |---|---|
-| `lf.CRIMSON` | first of the house pair: our method's posterior, bands and fills |
-| `lf.TEAL` | second of the house pair: forecast and posterior-predictive draws |
+| `lf.Colour.CRIMSON` | first of the house pair: our method's posterior, bands and fills |
+| `lf.Colour.TEAL` | second of the house pair: forecast and posterior-predictive draws |
 | `lf.REFERENCE` | the baseline method being compared against (grey) |
 | `lf.TRUE` | ground truth, always drawn last so it sits on top |
 
@@ -321,17 +344,20 @@ teal page with a soft glow and light ink (slides and posters, not papers),
 matplotlib's darker one) and sequential ramps, white through the colour to black:
 `lf.ramp(n, "teal")`, `gradient="crimson"`, `ramp="teal"`.
 
-Several series (methods, a sweep over a parameter): use the default colour cycle, `"C0"`,
-`"C1"`, ... It runs crimson, teal, then muted blue, orange, green, purple, brown, olive (the
-`"seaborn_deep"` scheme, nothing neon), so the first two series always match Fig. 3.11. Give one method the same `"Cn"` in every figure of
-a report. Do not pick colours by hand.
+Several series (methods, a sweep over a parameter): take them from `lf.Colour`, in its
+order: `CRIMSON`, `TEAL`, then muted `BLUE`, `ORANGE`, `GREEN`, `PURPLE`, `BROWN`, `SAND`
+(the `"seaborn_deep"` scheme, nothing neon), so the first two series always match
+Fig. 3.11. Type `lf.Colour.` and the editor lists them. It is also the default cycle: a
+call with no `color=` walks it in that order. Wherever a notebook sets a colour it writes
+the name (`lf.Colour.BLUE`), never a cycle code (`"C2"`), which says nothing about the
+colour. Give one method the same colour in every figure of a report.
 
 An ordered sweep (pressure, noise level, step count) is not a set of methods: colour it with
 `lf.ramp(n, name)`, which returns `n` colours from dark to light. Ramps: `"heat"` (maroon to
 sand, the default), `"crimson"`, `"teal"`, `"blues"` and `"ylgnbu"` (ColorBrewer), `"viridis"`, `"magma"`, `"plasma"`, `"cividis"`
 (colour-blind safe), `"rocket"`, `"mako"`, `"flare"`, `"crest"`. Each stops before its pale
 end so thin lines stay readable. The full colormaps are `lf.RAMPS[name][0]`. Any colour works in
-place of a ramp name and gives shades of that colour (`lf.ramp(n, "C1")`,
+place of a ramp name and gives shades of that colour (`lf.ramp(n, lf.Colour.TEAL)`,
 `gradient="tab:blue"`), so single-hue ramps need no entry of their own.
 
 2D fields use `lf.heatmap`: the same ramps, pale for low values and dark for high
@@ -347,16 +373,19 @@ and `vmax` one period apart. Panels that
 are compared against each other share `vmin` and `vmax`. Set `aspect="equal"` on the axes
 when x and y are the same physical quantity. Overlay sensors with `lf.data`.
 
-Another set of series colours is one word: `lf.use(series="tol_muted")`, then `"C0"`,
-`"C1"`, ... The series schemes, listed in `lf.KINDS["categorical"]`:
+Another set of series colours: unpack the scheme into names that say the hue, in the
+scheme's order (`examples/schemes.svg` shows each one):
+`TEAL, OCHRE, GREY, INK = lf.COMBOS["Kandinsky"]`. Then use those names, as with
+`lf.Colour`. `lf.use(series="tol_muted")` also makes a scheme the cycle for calls with no
+`color=`. The series schemes, listed in `lf.KINDS["categorical"]`:
 
 - `"seaborn_deep"` (ten colours): the source of the default cycle.
 - `"tol_bright"` (seven), `"tol_muted"` (nine), `"tol_medcontrast"` (six, as three
   light and dark pairs): Paul Tol's sets, for a figure that must survive colour-blind reading.
 - `"Klimt"` (six), `"Thomas"` (eight), `"Tiepolo"` (eight), `"Hokusai1"` (seven),
   `"Derain"` (seven): painters' palettes, muted, with hues all round the wheel.
-- `"Kandinsky"` (four: teal, ochre, grey, near-black): `"C0"` and `"C1"` are two data
-  subsets and `"C2"` is the neutral for trend lines (Churkin's layout).
+- `"Kandinsky"` (four: teal, ochre, grey, near-black): teal and ochre are two data
+  subsets and grey is the neutral for trend lines (Churkin's layout).
 
 Keep the palest colours of a scheme for fills and thick lines.
 `lf.points` gives each marker an edge in a darker shade of its fill (`lf.darker(color)`).
@@ -394,8 +423,8 @@ steps for ordered sweeps. Grey is free and goes with anything.
   `lf.combos(kind="categorical")` is the series schemes;
   `examples/colours.svg` shows every scheme by kind, with Wada's last.
 
-Use them through the calls that already exist: `lf.use(series="Klimt")` then `"C0"`,
-`"C1"`; `lf.ramp(n, lf.COMBOS["devon"])` for `n` shades, dark first; `ramp=lf.COMBOS["amp"]`
+Use them through the calls that already exist: a series scheme unpacked into named
+colours (above); `lf.ramp(n, lf.COMBOS["devon"])` for `n` shades, dark first; `ramp=lf.COMBOS["amp"]`
 in `heatmap` and `surface`, `gradient=lf.COMBOS["amp"]` in `paths`. Every colour argument
 (`lf.ramp`, `ramp=`, `gradient=`, `lf.steps`) takes any of: a colour, a ramp name, a scheme
 name, a Wada number, or a list of colours. A series scheme or a Wada combination is put in
@@ -435,7 +464,8 @@ only ever a half-transparent band or a thin line, which is what keeps it calm.
   or baseline level is `lf.reference(ax, value, label=...)`. A reference method's interval across a sweep is
   `ax.axhspan(lo, hi, color=lf.REFERENCE, alpha=0.3, lw=0, label="NUTS")`.
 - A panel showing two named quantities gets two titles in their colours:
-  `ax.set_title(a, loc="left", color="C1")` and `ax.set_title(b, loc="right", color="C0")`.
+  `ax.set_title(a, loc="left", color=lf.Colour.TEAL)` and
+  `ax.set_title(b, loc="right", color=lf.Colour.CRIMSON)`.
 - Dense oscillating signal against a measurement: `lf.ribbon(..., lw=0.3)` then `lf.signal`,
   posterior in crimson (teal and the blue measurement do not separate), a zoomed panel beside it.
 - Plot large values in scaled units and put the scale in the label
@@ -508,8 +538,8 @@ the helpers and `lf.show` already do steps 3, 5, 6 and 7, so the notebook only d
    panels in shape at any column count, so pass `aspect=` only for a different shape. If tick labels of neighbouring panels touch, cap them
    (`ax.locator_params(nbins=4)`).
 5. Colour. Posterior against predictive keeps the house crimson then teal. Other series
-   take clearly different hues at moderate saturation (a series scheme:
-   `lf.use(series="tol_muted")`); an ordered sweep takes shades of one hue (`lf.ramp(n, colour)`).
+   take clearly different hues at moderate saturation (`lf.Colour`, or a series scheme
+   unpacked into named colours); an ordered sweep takes shades of one hue (`lf.ramp(n, colour)`).
    Grey for context and trend lines. Nothing neon.
 6. Weight. Markers and lines must read at print size: `lf.points` and the default widths
    are sized for that. Stress a series with weight or a dash pattern before a new colour.
@@ -628,38 +658,45 @@ Output
 
 ## Running
 
-The library and Jupyter are installed in the default `python3`:
+A notebook runs on the Python its project already uses: the project's `.venv` (or its conda
+environment), the same one its scripts run on. Never register a kernel just for a
+notebook: a second environment drifts from the project's, and the user has to know its
+name. Every notebook is written with the kernel name `python3`, which in any environment
+means that environment's own Python, so the `jupyter` that is called decides where it runs.
+
+On top of the project's packages the environment needs `labfigs`, `ipykernel` and
+`nbconvert`. Check from the project root, and add what is missing (a `uv` project):
 
 ```bash
-python3 -m labfigs <scratch>/draft.py figures/name.ipynb
+.venv/bin/python -c "import labfigs, ipykernel, nbconvert"
 ```
 
 ```bash
-jupyter nbconvert --to notebook --execute --inplace figures/name.ipynb
+uv pip install ipykernel nbconvert -e "$HOME/Documents/Predictive Science Lab/labfigs"
 ```
 
-A notebook runs on the kernel named inside it, in VS Code, JupyterLab and `nbconvert` alike.
-The default, `python3`, is right when the notebook needs only labfigs and what the default
-`python3` has. A notebook that imports a project's own code needs that project's
-environment, as a kernel named after the project. Run `jupyter kernelspec list`: when the
-project's kernel is not there, make it before writing the notebook. In a `uv` project that
-is one command from the project root (anything after the name is passed to `uv run`).
-Then name the kernel when making the notebook:
+That installs into `.venv` and leaves `pyproject.toml` and `uv.lock` alone. A plain
+`uv sync` removes the three again (`uv run` does not), so the header's `**Kernel:**` line
+carries the command. Do not add labfigs to a project's dependencies unless the user asks.
+
+Then write the notebook and run it on that environment, both from the project root:
 
 ```bash
-python3 -m labfigs kernel ift-thermal --no-sync --extra ift
+python3 -m labfigs <scratch>/draft.py report/figures.ipynb
 ```
 
 ```bash
-python3 -m labfigs <scratch>/draft.py report/figures.ipynb ift-thermal
+.venv/bin/jupyter nbconvert --to notebook --execute --inplace report/figures.ipynb
 ```
 
-The kernel starts through `uv run --with-editable labfigs --with ipykernel`, so it is the
-project's own environment with labfigs added, and nothing is installed into the project.
-Check that it works before handing over: the `nbconvert` run above must pass on it. Read
-the versions for the header's `**Kernel:**` line from the project's environment, never
-from memory. An editor may open the notebook on another kernel it remembers, which fails at
-the first import; the `**Kernel:**` line is what tells the user which one to choose.
+The run must pass before the notebook is handed over. Read the versions for the header's
+`**Kernel:**` line from the environment, never from memory. An editor may open the notebook
+on another Python it remembers, which fails at the first import; the `**Kernel:**` line
+tells the user which one to choose (VS Code: the kernel picker, **Python Environments**,
+`.venv`).
+
+A notebook outside any project (the library's own examples) runs on the default `python3`,
+which has labfigs and Jupyter: plain `jupyter nbconvert ...`.
 
 Worked examples in the library, each a notebook to copy from:
 `examples/duffing_311.ipynb` reproduces thesis Fig. 3.11,
